@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+node scripts / sync - movies.cjsimport { supabase } from '../lib/supabase';
 
 export const districts = [
     { id: 1, name: "Ariyalur" },
@@ -139,6 +139,86 @@ export async function getShowById(showId) {
         };
     } catch (err) {
         console.error('Error fetching show:', err);
+        return null;
+    }
+}
+
+export async function getAllMovies() {
+    try {
+        const { data, error } = await supabase
+            .from('movies')
+            .select('id, title, poster_url, language, release_date')
+            .order('release_date', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching all movies:', error);
+            return [];
+        }
+        return data || [];
+    } catch (err) {
+        console.error('Error fetching all movies:', err);
+        return [];
+    }
+}
+
+export async function getMovieDetails(movieId) {
+    try {
+        const { data: movie, error: movieError } = await supabase
+            .from('movies')
+            .select('id, title, poster_url, language, description, director, cast_names, runtime, certificate')
+            .eq('id', Number(movieId))
+            .single();
+
+        if (movieError || !movie) {
+            console.error('Error fetching movie:', movieError);
+            return null;
+        }
+
+        const { data: shows, error: showsError } = await supabase
+            .from('shows')
+            .select('*, theaters(*, districts(*))')
+            .eq('movie_id', Number(movieId));
+
+        if (showsError) {
+            console.error('Error fetching shows:', showsError);
+            return { movie, showtimes: [] };
+        }
+
+        const showtimes = await Promise.all((shows || []).map(async (show) => {
+            const theater = show.theaters || {};
+            const district = theater.districts || {};
+
+            let seatsBooked = 0;
+            try {
+                const { data: bookings, error: bookingsError } = await supabase
+                    .from('bookings')
+                    .select('seats')
+                    .eq('show_id', show.id);
+
+                if (!bookingsError && bookings) {
+                    seatsBooked = bookings.reduce((sum, b) => {
+                        return sum + (b.seats ? b.seats.split(',').filter(s => s.trim()).length : 0);
+                    }, 0);
+                }
+            } catch (err) {
+                console.error('Error fetching bookings for show', show.id, err);
+            }
+
+            return {
+                show_id: show.id,
+                theater_name: theater.name || 'Unknown',
+                theater_address: theater.address || '',
+                district_name: district.name || 'Unknown',
+                show_time: show.show_time,
+                price: show.price,
+                seats_booked: seatsBooked,
+                seats_total: 80,
+            };
+        }));
+
+        return { movie, showtimes };
+    } catch (err) {
+        console.error('Error fetching movie details:', err);
         return null;
     }
 }

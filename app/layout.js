@@ -17,9 +17,14 @@ export default function RootLayout({ children }) {
                         <header className="sticky top-0 z-50 bg-primary text-white shadow-md">
                             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                                 <div className="flex justify-between items-center h-16">
-                                    <a href="/" className="text-xl font-bold hover:opacity-90 transition">
-                                        Watch Your Show
-                                    </a>
+                                    <div className="flex items-center gap-6">
+                                        <a href="/" className="text-xl font-bold hover:opacity-90 transition">
+                                            Watch Your Show
+                                        </a>
+                                        <a href="/movies" className="text-sm font-semibold hover:text-[#FF6B6B] transition-colors">
+                                            Movies
+                                        </a>
+                                    </div>
                                     <nav className="flex items-center gap-4">
                                         <UserMenuClient />
                                     </nav>
