@@ -1,0 +1,174 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { supabase } from '../../../lib/supabase';
+import { useAdminAuth } from '../../../context/AdminAuthContext';
+
+export default function AdminDashboardPage() {
+    const { admin } = useAdminAuth();
+    const [theater, setTheater] = useState(null);
+    const [shows, setShows] = useState([]);
+    const [movies, setMovies] = useState([]);
+    const [newShow, setNewShow] = useState({ movieId: '', time: '', price: '' });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!admin?.theaterId) return;
+        fetchTheater();
+        fetchShows();
+        fetchMovies();
+    }, [admin]);
+
+    const fetchTheater = async () => {
+        const { data, error } = await supabase
+            .from('theaters')
+            .select('name, address')
+            .eq('id', admin.theaterId)
+            .single();
+        if (data) setTheater(data);
+    };
+
+    const fetchShows = async () => {
+        const { data, error } = await supabase
+            .from('shows')
+            .select('id, show_time, price, movie_id, movies (title)')
+            .eq('theater_id', admin.theaterId)
+            .order('show_time', { ascending: true });
+        if (data) setShows(data || []);
+        setLoading(false);
+    };
+
+    const fetchMovies = async () => {
+        const { data, error } = await supabase
+            .from('movies')
+            .select('id, title')
+            .order('title', { ascending: true });
+        if (data) setMovies(data || []);
+    };
+
+    const handleDeleteShow = async (showId) => {
+        if (!confirm('Delete this show?')) return;
+        await supabase.from('shows').delete().eq('id', showId);
+        fetchShows();
+    };
+
+    const handleAddShow = async (e) => {
+        e.preventDefault();
+        if (!newShow.movieId || !newShow.time || !newShow.price) return;
+        const { data, error } = await supabase.from('shows').insert({
+            theater_id: Number(admin.theaterId),
+            movie_id: Number(newShow.movieId),
+            show_time: String(newShow.time),
+            price: Number(newShow.price),
+        });
+        if (error) {
+            console.error('Supabase insert error:', error);
+        }
+        setNewShow({ movieId: '', time: '', price: '' });
+        fetchShows();
+    };
+
+    if (!admin) return null;
+
+    return (
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-[#C21807] to-[#E63946] bg-clip-text text-transparent mb-2">
+                    Theater Admin
+                </h1>
+                <p className="text-gray-600">Manage shows for your theater</p>
+                {theater && (
+                    <div className="card p-6 mt-4">
+                        <h2 className="text-xl font-bold text-gray-800">{theater.name}</h2>
+                        <p className="text-gray-600">{theater.address}</p>
+                    </div>
+                )}
+            </div>
+
+            <div className="mb-10">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Current Shows</h2>
+                {loading ? (
+                    <div className="card p-6 text-gray-600">Loading shows...</div>
+                ) : shows.length === 0 ? (
+                    <div className="card p-6 text-gray-600">No shows found. Add one below.</div>
+                ) : (
+                    <div className="space-y-3">
+                        {shows.map((show) => (
+                            <div key={show.id} className="card p-4 flex items-center justify-between">
+                                <div>
+                                    <p className="text-lg font-semibold text-gray-800">
+                                        {show.movies?.title || 'Unknown Movie'}
+                                    </p>
+                                    <p className="text-gray-600">
+                                        {show.show_time} • ₹{Number(show.price).toFixed(2)}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => handleDeleteShow(show.id)}
+                                    className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <div className="mb-10">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Add New Show</h2>
+                <form onSubmit={handleAddShow} className="card p-6 space-y-4">
+                    <div>
+                        <label htmlFor="movieId" className="block text-sm font-semibold text-gray-700 mb-2">
+                            Movie
+                        </label>
+                        <select
+                            id="movieId"
+                            value={newShow.movieId}
+                            onChange={(e) => setNewShow({ ...newShow, movieId: e.target.value })}
+                            required
+                            className="input-field"
+                        >
+                            <option value="">Select movie</option>
+                            {movies.map((m) => (
+                                <option key={m.id} value={m.id}>{m.title}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label htmlFor="time" className="block text-sm font-semibold text-gray-700 mb-2">
+                            Show Time
+                        </label>
+                        <input
+                            id="time"
+                            type="text"
+                            value={newShow.time}
+                            onChange={(e) => setNewShow({ ...newShow, time: e.target.value })}
+                            required
+                            className="input-field"
+                            placeholder="7:00 PM"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="price" className="block text-sm font-semibold text-gray-700 mb-2">
+                            Price (₹)
+                        </label>
+                        <input
+                            id="price"
+                            type="number"
+                            step="0.01"
+                            value={newShow.price}
+                            onChange={(e) => setNewShow({ ...newShow, price: e.target.value })}
+                            required
+                            className="input-field"
+                            placeholder="150"
+                        />
+                    </div>
+                    <button type="submit" className="btn-primary w-full">
+                        Add Show
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+}
