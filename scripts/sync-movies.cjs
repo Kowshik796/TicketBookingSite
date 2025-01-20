@@ -47,10 +47,13 @@ async function fetchMovieTrailer(movieId) {
     const res = await fetch(url);
     const data = await res.json();
     const videos = data.results || [];
-    const youtubeTrailers = videos.filter(v => v.type === 'Trailer' && v.site === 'YouTube');
-    const official = youtubeTrailers.find(v => v.official === true);
-    const trailer = official || youtubeTrailers[0];
-    return trailer ? trailer.key : null;
+    // Priority: official Trailer on YouTube > any Trailer on YouTube > any Teaser on YouTube
+    const officialTrailer = videos.find(v => v.type === 'Trailer' && v.site === 'YouTube' && v.official === true);
+    if (officialTrailer) return officialTrailer.key;
+    const anyTrailer = videos.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+    if (anyTrailer) return anyTrailer.key;
+    const teaser = videos.find(v => v.type === 'Teaser' && v.site === 'YouTube');
+    return teaser ? teaser.key : null;
 }
 
 async function syncMovies() {
@@ -228,6 +231,73 @@ async function syncMovies() {
     }
 
     console.log(`Sync complete. Inserted: ${inserted}, Updated: ${updated}, Shows created: ${totalShowsCreated}`);
+
+    // Backfill missing trailers and posters for existing movies
+    console.log('\n--- Backfilling missing trailers and posters ---');
+    let backfilled = 0;
+    try {
+        const { data: missingMovies, error: queryError } = await supabase
+            .from('movies')
+            .select('id, tmdb_id, title')
+            .or('trailer_key.is.null,poster_url.is.null');
+
+        if (queryError) {
+            console.warn('Warning: Could not query movies for backfill:', queryError.message);
+        } else if (missingMovies && missingMovies.length > 0) {
+            console.log(`Found ${missingMovies.length} movies missing trailer_key or poster_url.`);
+
+            for (const movie of missingMovies) {
+                let trailerKey = null;
+                let posterUrl = null;
+
+                try {
+                    const details = await fetchMovieDetails(movie.tmdb_id);
+                    posterUrl = details.poster_path
+                        ? `https://image.tmdb.org/t/p/w500${details.poster_path}`
+                        : null;
+                } catch (err) {
+                    console.warn(`Warning: Failed to fetch details for backfill movie ${movie.tmdb_id} (${movie.title}):`, err.message);
+                }
+
+                await sleep(250);
+
+                try {
+                    trailerKey = await fetchMovieTrailer(movie.tmdb_id);
+                } catch (err) {
+                    console.warn(`Warning: Failed to fetch trailer for backfill movie ${movie.tmdb_id} (${movie.title}):`, err.message);
+                }
+
+                await sleep(250);
+
+                const updateFields = {};
+                if (trailerKey !== null) updateFields.trailer_key = trailerKey;
+                if (posterUrl !== null) updateFields.poster_url = posterUrl;
+                if (Object.keys(updateFields).length > 0) {
+                    updateFields.synced_at = new Date().toISOString();
+                    const { error: updateError } = await supabase
+                        .from('movies')
+                        .update(updateFields)
+                        .eq('id', movie.id);
+
+                    if (updateError) {
+                        console.warn(`Warning: Failed to update backfill movie ${movie.title}:`, updateError.message);
+                    } else {
+                        backfilled++;
+                        const parts = [];
+                        if (trailerKey !== null) parts.push('trailer');
+                        if (posterUrl !== null) parts.push('poster');
+                        console.log(`Backfilled ${parts.join(' + ')} for ${movie.title}`);
+                    }
+                }
+            }
+        } else {
+            console.log('No movies need backfill.');
+        }
+    } catch (err) {
+        console.warn('Warning: Backfill pass failed:', err.message);
+    }
+
+    console.log(`Backfill complete. Updated: ${backfilled} movies.`);
 }
 
 syncMovies().catch((err) => {
