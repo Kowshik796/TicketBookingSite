@@ -5,7 +5,6 @@ import { LanguageProvider } from '../context/LanguageContext';
 import RequireAuth from '../components/RequireAuth';
 import UserMenuClient from '../components/UserMenuClient';
 import HamburgerMenu from '../components/HamburgerMenu';
-import DistrictSelector from '../components/DistrictSelector';
 import './globals.css';
 
 export const metadata = {
@@ -31,7 +30,6 @@ export default function RootLayout({ children }) {
                                                     </a>
                                                 </div>
                                                 <nav className="flex items-center gap-1 sm:gap-4 flex-shrink-0">
-                                                    <DistrictSelector />
                                                     <UserMenuClient />
                                                     <HamburgerMenu />
                                                 </nav>

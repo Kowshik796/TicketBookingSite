@@ -72,6 +72,10 @@ export function AuthProvider({ children }) {
         return { success: true };
     };
 
+    const updateUser = (updates) => {
+        setUser(prev => prev ? { ...prev, ...updates } : null);
+    };
+
     const logout = () => {
         setUser(null);
         localStorage.removeItem('currentUserEmail');
@@ -82,7 +86,7 @@ export function AuthProvider({ children }) {
     }
 
     return (
-        <AuthContext.Provider value={{ user, login, signup, logout }}>
+        <AuthContext.Provider value={{ user, login, signup, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );
