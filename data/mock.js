@@ -1,4 +1,4 @@
-node scripts / sync - movies.cjsimport { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 
 export const districts = [
     { id: 1, name: "Ariyalur" },
