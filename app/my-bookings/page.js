@@ -72,13 +72,18 @@ export default function MyBookingsPage() {
                             const theater = show.theaters || {};
                             return (
                                 <div key={booking.id} className="card p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6">
-                                    {movie.poster_url && (
+                                    {movie.poster_url ? (
                                         <div className="w-full sm:w-24 flex-shrink-0">
                                             <img
                                                 src={movie.poster_url}
                                                 alt={movie.title}
                                                 className="w-full sm:w-24 h-36 object-cover rounded-xl"
                                             />
+                                        </div>
+                                    ) : (
+                                        <div className="w-full sm:w-24 flex-shrink-0 h-36 bg-gray-200 dark:bg-gray-700 rounded-xl flex flex-col items-center justify-center gap-1">
+                                            <span className="text-2xl">🎬</span>
+                                            <span className="text-[10px] text-gray-500 dark:text-gray-300 font-medium text-center px-1">Poster Coming Soon</span>
                                         </div>
                                     )}
                                     <div className="flex-1 min-w-0">

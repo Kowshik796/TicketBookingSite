@@ -68,6 +68,44 @@ async function syncMovies() {
 
     console.log(`Found ${allMovies.length} Tamil movies.`);
 
+    // --- Step 2: Fetch major international releases with Tamil dubs ---
+    console.log('\n--- Fetching major international releases with Tamil dubs ---');
+    const internationalNowPlaying = await fetchIndiaMovies('now_playing');
+    const internationalUpcoming = await fetchIndiaMovies('upcoming');
+
+    // De-duplicate by TMDB ID and filter to non-Tamil originals that pass popularity threshold
+    const existingTmdbIds = new Set(allMovies.map(m => m.id));
+    const candidateInternational = [...internationalNowPlaying, ...internationalUpcoming]
+        .filter((m) => m.original_language !== 'ta' && !existingTmdbIds.has(m.id))
+        .filter((m) => (m.popularity || 0) > 80 || (m.vote_count || 0) > 300);
+
+    console.log(`Found ${candidateInternational.length} major international release candidates.`);
+
+    const internationalMovies = [];
+    for (const movie of candidateInternational) {
+        try {
+            const details = await fetchMovieDetails(movie.id);
+            const hasTamilDub = (details.spoken_languages || []).some(lang => lang.iso_639_1 === 'ta');
+            if (hasTamilDub) {
+                // Merge the filtered details with the original list data
+                internationalMovies.push({
+                    ...movie,
+                    overview: details.overview,
+                    runtime: details.runtime,
+                });
+                console.log(`  ✓ ${movie.title} — has Tamil audio track`);
+            } else {
+                console.log(`  ✗ ${movie.title} — no Tamil audio track, skipping`);
+            }
+        } catch (err) {
+            console.warn(`  Warning: Failed to fetch details for ${movie.title}:`, err.message);
+        }
+        await sleep(250);
+    }
+
+    console.log(`\nInternational movies with Tamil dubs to sync: ${internationalMovies.length}`);
+    allMovies.push(...internationalMovies);
+
     if (allMovies.length === 0) {
         console.log('No Tamil movies found in now_playing/upcoming. Trying discover endpoint...');
         const discoverUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&with_original_language=ta&sort_by=release_date.desc&region=IN`;

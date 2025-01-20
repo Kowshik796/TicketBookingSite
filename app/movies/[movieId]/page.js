@@ -80,10 +80,9 @@ export default function MovieDetailPage() {
                             />
                         </div>
                     ) : (
-                        <div className="w-full md:w-72 h-96 flex-shrink-0 bg-gradient-to-br from-gray-100 dark:from-gray-700 to-gray-200 dark:to-gray-600 rounded-xl flex items-center justify-center">
-                            <svg className="w-20 h-20 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path>
-                            </svg>
+                        <div className="w-full sm:w-56 md:w-72 flex-shrink-0 aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-xl shadow-lg flex flex-col items-center justify-center gap-3">
+                            <span className="text-5xl">🎬</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-300 font-medium">Poster Coming Soon</span>
                         </div>
                     )}
                     <div className="flex-1">

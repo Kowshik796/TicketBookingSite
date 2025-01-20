@@ -105,10 +105,9 @@ export default function HomePage() {
                                 />
                             </div>
                         ) : (
-                            <div className="aspect-[2/3] w-full bg-gradient-to-br from-gray-100 dark:from-gray-700 to-gray-200 dark:to-gray-600 flex items-center justify-center">
-                                <svg className="w-12 h-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path>
-                                </svg>
+                            <div className="aspect-[2/3] w-full bg-gray-200 dark:bg-gray-700 flex flex-col items-center justify-center gap-2">
+                                <span className="text-3xl">🎬</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-300 font-medium text-center px-2">Poster Coming Soon</span>
                             </div>
                         )}
                         <div className="p-4">
