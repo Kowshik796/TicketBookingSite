@@ -58,8 +58,8 @@ export default function MovieDetailPage() {
     const districtNames = Object.keys(groupedByDistrict).sort();
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
-            <div className="mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
+            <div className="mb-6 sm:mb-8">
                 <div className="breadcrumb mb-4">
                     <Link href="/">Home</Link>
                     <span>/</span>
@@ -69,10 +69,10 @@ export default function MovieDetailPage() {
                 </div>
             </div>
 
-            <div className="card p-6 mb-10 overflow-hidden">
-                <div className="flex flex-col md:flex-row gap-8">
+            <div className="card p-4 sm:p-6 mb-8 sm:mb-10 overflow-hidden">
+                <div className="flex flex-col sm:flex-row gap-6 sm:gap-8">
                     {movie.poster_url ? (
-                        <div className="w-full md:w-72 flex-shrink-0">
+                        <div className="w-full sm:w-56 md:w-72 flex-shrink-0">
                             <img
                                 src={movie.poster_url}
                                 alt={movie.title}

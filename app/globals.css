@@ -37,6 +37,7 @@
         @apply bg-gradient-to-r from-[#C21807] to-[#E63946] text-white font-semibold px-6 py-3 rounded-xl;
         @apply shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300;
         @apply active:scale-95;
+        @apply min-h-[44px] text-[16px] leading-tight;
     }
 
     .card {
@@ -48,10 +49,11 @@
         @apply w-full px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-xl;
         @apply focus:border-[#C21807] focus:ring-4 focus:ring-red-500/10;
         @apply outline-none transition-all duration-200 text-gray-900 dark:text-gray-100;
+        @apply text-[16px] leading-tight;
     }
 
     .seat-btn {
-        @apply w-10 h-10 rounded-lg font-semibold text-sm border-2 transition-all duration-200;
+        @apply w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-semibold text-[11px] sm:text-sm border-2 transition-all duration-200;
         @apply hover:scale-110 hover:shadow-lg active:scale-95;
     }
 
@@ -94,15 +96,16 @@
         @apply border-2 border-gray-200 dark:border-gray-600 hover:border-[#C21807] rounded-xl px-5 py-3;
         @apply transform hover:scale-105 transition-all duration-200;
         @apply shadow-sm hover:shadow-md;
+        @apply min-h-[44px];
     }
 
     .section-title {
-        @apply text-3xl md:text-4xl font-bold mb-3;
+        @apply text-2xl sm:text-3xl md:text-4xl font-bold mb-3;
         @apply bg-gradient-to-r from-[#1A1A2E] to-[#C21807] bg-clip-text text-transparent;
     }
 
     .breadcrumb {
-        @apply flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400;
+        @apply flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap;
     }
 
     .breadcrumb a {

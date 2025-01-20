@@ -46,8 +46,8 @@ export default function TheaterDetailPage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
-            <div className="mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
+            <div className="mb-6 sm:mb-8">
                 <h1 className="section-title mb-2">Theater Details</h1>
                 <div className="breadcrumb">
                     <Link href="/">Home</Link>

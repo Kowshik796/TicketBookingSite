@@ -71,8 +71,8 @@ export default function AdminDashboardPage() {
     if (!admin) return null;
 
     return (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+            <div className="mb-6 sm:mb-8">
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-[#C21807] to-[#E63946] bg-clip-text text-transparent mb-2">
                     Theater Admin
                 </h1>

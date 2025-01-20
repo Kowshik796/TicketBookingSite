@@ -85,8 +85,8 @@ export default function CheckoutPage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
-            <div className="mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
+            <div className="mb-6 sm:mb-8">
                 <h1 className="section-title mb-2">Checkout</h1>
                 <div className="breadcrumb">
                     <Link href="/">Home</Link>
@@ -97,7 +97,7 @@ export default function CheckoutPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="card p-6">
+                    <div className="card p-4 sm:p-6">
                         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Movie & Show</h2>
                         <div className="flex items-start justify-between">
                             <div>

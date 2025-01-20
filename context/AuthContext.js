@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext(null);
 
@@ -9,56 +10,71 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('currentUser');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-        setLoading(false);
+        const initUser = async () => {
+            const email = localStorage.getItem('currentUserEmail');
+            if (email) {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('email', email)
+                    .single();
+                if (data && !error) {
+                    setUser(data);
+                } else {
+                    // Stale session — clear it
+                    localStorage.removeItem('currentUserEmail');
+                }
+            }
+            setLoading(false);
+        };
+        initUser();
     }, []);
 
-    const login = (email) => {
-        const usersJSON = localStorage.getItem('users');
-        const users = usersJSON ? JSON.parse(usersJSON) : [];
-        const found = users.find(u => u.email === email);
-        if (found) {
-            const { password, ...userWithoutPassword } = found;
-            setUser(userWithoutPassword);
-            localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
+    const login = async (email) => {
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', email)
+            .single();
+
+        if (data && !error) {
+            setUser(data);
+            localStorage.setItem('currentUserEmail', email);
             return { success: true };
         }
-        return { success: false, error: 'Email not found' };
+        return { success: false, error: 'Email not found. Please sign up.' };
     };
 
-    const signup = (name, email, password, extra = {}) => {
-        const usersJSON = localStorage.getItem('users');
-        const users = usersJSON ? JSON.parse(usersJSON) : [];
-        if (users.find(u => u.email === email)) {
-            return { success: false, error: 'Email already registered' };
+    const signup = async (name, email, _otpIgnored, extra = {}) => {
+        const { data, error } = await supabase
+            .from('users')
+            .insert({
+                name,
+                email,
+                age: extra.age || null,
+                mobile: extra.mobile || null,
+                district_id: extra.districtId || null,
+            })
+            .select()
+            .single();
+
+        if (error) {
+            if (error.code === '23505') {
+                // Unique constraint violation on email
+                return { success: false, error: 'This email is already registered' };
+            }
+            console.error('Signup error:', error);
+            return { success: false, error: 'Something went wrong. Please try again.' };
         }
-        if (extra.mobile && users.find(u => u.mobile === extra.mobile)) {
-            return { success: false, error: 'Mobile already registered' };
-        }
-        const newUser = {
-            id: Date.now(),
-            name,
-            email,
-            password,
-            age: extra.age || null,
-            mobile: extra.mobile || '',
-            gmail: extra.gmail || '',
-            districtId: extra.districtId || null,
-        };
-        users.push(newUser);
-        localStorage.setItem('users', JSON.stringify(users));
-        const { password: _, ...userWithoutPassword } = newUser;
-        setUser(userWithoutPassword);
-        localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
+
+        setUser(data);
+        localStorage.setItem('currentUserEmail', data.email);
         return { success: true };
     };
 
     const logout = () => {
         setUser(null);
-        localStorage.removeItem('currentUser');
+        localStorage.removeItem('currentUserEmail');
     };
 
     if (loading) {

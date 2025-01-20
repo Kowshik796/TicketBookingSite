@@ -7,8 +7,8 @@ export default function SettingsPage() {
     const { theme, toggleTheme } = useTheme();
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
-            <div className="mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
+            <div className="mb-6 sm:mb-8">
                 <h1 className="section-title mb-2">Settings</h1>
                 <div className="breadcrumb">
                     <Link href="/">Home</Link>
@@ -17,7 +17,7 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            <div className="card p-8 max-w-xl">
+            <div className="card p-4 sm:p-8 max-w-xl">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Theme</h2>
                 <div className="flex items-center justify-between">
                     <div>
@@ -30,8 +30,8 @@ export default function SettingsPage() {
                         <button
                             onClick={() => theme === 'dark' && toggleTheme()}
                             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${theme === 'light'
-                                    ? 'bg-[#C21807] text-white shadow-md'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                ? 'bg-[#C21807] text-white shadow-md'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                 }`}
                         >
                             Light
@@ -39,8 +39,8 @@ export default function SettingsPage() {
                         <button
                             onClick={() => theme === 'light' && toggleTheme()}
                             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${theme === 'dark'
-                                    ? 'bg-[#C21807] text-white shadow-md'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                ? 'bg-[#C21807] text-white shadow-md'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                 }`}
                         >
                             Dark

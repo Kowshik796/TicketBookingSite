@@ -47,7 +47,9 @@ async function fetchMovieTrailer(movieId) {
     const res = await fetch(url);
     const data = await res.json();
     const videos = data.results || [];
-    const trailer = videos.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+    const youtubeTrailers = videos.filter(v => v.type === 'Trailer' && v.site === 'YouTube');
+    const official = youtubeTrailers.find(v => v.official === true);
+    const trailer = official || youtubeTrailers[0];
     return trailer ? trailer.key : null;
 }
 

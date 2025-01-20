@@ -13,14 +13,14 @@ export default function LoginPage() {
 
     const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         if (!email.trim() || !isValidEmail) {
             setError('Enter a valid email address');
             return;
         }
-        const result = login(email);
+        const result = await login(email);
         if (result.success) {
             router.push('/');
         } else {

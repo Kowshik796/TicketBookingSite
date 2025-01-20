@@ -4,8 +4,8 @@ import Link from 'next/link';
 
 export default function AboutPage() {
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
-            <div className="mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
+            <div className="mb-6 sm:mb-8">
                 <h1 className="section-title mb-2">About Us</h1>
                 <div className="breadcrumb">
                     <Link href="/">Home</Link>
@@ -14,7 +14,7 @@ export default function AboutPage() {
                 </div>
             </div>
 
-            <div className="card p-8 max-w-3xl">
+            <div className="card p-4 sm:p-8 max-w-3xl">
                 <div className="prose prose-gray dark:prose-invert max-w-none">
                     <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-base">
                         Watch Your Show is a movie ticket booking platform built specifically for Tamil Nadu,

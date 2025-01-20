@@ -118,10 +118,10 @@ export default function BookingPage() {
                     </div>
                 </div>
 
-                <div className="flex flex-col items-center gap-3">
+                <div className="flex flex-col items-center gap-1.5 sm:gap-3 overflow-x-auto pb-2">
                     {rows.map(row => (
-                        <div key={row} className="flex items-center gap-2">
-                            <span className="w-8 text-center text-sm font-bold text-gray-700 dark:text-gray-300">{row}</span>
+                        <div key={row} className="flex items-center gap-1 sm:gap-2">
+                            <span className="w-5 sm:w-8 text-center text-[11px] sm:text-sm font-bold text-gray-700 dark:text-gray-300">{row}</span>
                             {Array.from({ length: seatsPerRow }).map((_, i) => {
                                 const seatId = `${row}${i + 1}`;
                                 const isSelected = selectedSeats.includes(seatId);
@@ -135,7 +135,7 @@ export default function BookingPage() {
                                     </button>
                                 );
                             })}
-                            <span className="w-8 text-center text-sm font-bold text-gray-700 dark:text-gray-300">{row}</span>
+                            <span className="w-5 sm:w-8 text-center text-[11px] sm:text-sm font-bold text-gray-700 dark:text-gray-300">{row}</span>
                         </div>
                     ))}
                 </div>
