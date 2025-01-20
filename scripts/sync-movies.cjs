@@ -24,6 +24,13 @@ async function fetchTamilMovies(endpoint) {
     return data.results || [];
 }
 
+async function fetchIndiaMovies(endpoint) {
+    const url = `https://api.themoviedb.org/3/movie/${endpoint}?api_key=${TMDB_API_KEY}&region=IN&language=en-US`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data.results || [];
+}
+
 async function fetchMovieDetails(movieId) {
     const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${TMDB_API_KEY}&language=en-US`;
     const res = await fetch(url);
