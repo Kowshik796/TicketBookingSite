@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useAdminAuth } from '../../../context/AdminAuthContext';
+import { getTheaterAnalytics } from '../../../data/db';
 
 export default function AdminDashboardPage() {
     const { admin } = useAdminAuth();
@@ -11,12 +12,15 @@ export default function AdminDashboardPage() {
     const [movies, setMovies] = useState([]);
     const [newShow, setNewShow] = useState({ movieId: '', time: '', price: '' });
     const [loading, setLoading] = useState(true);
+    const [analytics, setAnalytics] = useState(null);
+    const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
     useEffect(() => {
         if (!admin?.theaterId) return;
         fetchTheater();
         fetchShows();
         fetchMovies();
+        fetchAnalytics();
     }, [admin]);
 
     const fetchTheater = async () => {
@@ -46,10 +50,18 @@ export default function AdminDashboardPage() {
         if (data) setMovies(data || []);
     };
 
+    const fetchAnalytics = async () => {
+        setAnalyticsLoading(true);
+        const data = await getTheaterAnalytics(admin.theaterId);
+        setAnalytics(data);
+        setAnalyticsLoading(false);
+    };
+
     const handleDeleteShow = async (showId) => {
         if (!confirm('Delete this show?')) return;
         await supabase.from('shows').delete().eq('id', showId);
         fetchShows();
+        fetchAnalytics();
     };
 
     const handleAddShow = async (e) => {
@@ -66,9 +78,12 @@ export default function AdminDashboardPage() {
         }
         setNewShow({ movieId: '', time: '', price: '' });
         fetchShows();
+        fetchAnalytics();
     };
 
     if (!admin) return null;
+
+    const hasBookings = analytics && analytics.totalBookings > 0;
 
     return (
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
@@ -82,6 +97,60 @@ export default function AdminDashboardPage() {
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white">{theater.name}</h2>
                         <p className="text-gray-600 dark:text-gray-400">{theater.address}</p>
                     </div>
+                )}
+            </div>
+
+            <div className="mb-10">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Analytics Overview</h2>
+                {analyticsLoading ? (
+                    <div className="card p-6 text-gray-600 dark:text-gray-400">Loading analytics...</div>
+                ) : !hasBookings ? (
+                    <div className="card p-6 text-gray-600 dark:text-gray-400">
+                        No bookings yet — analytics will appear here once customers start booking.
+                    </div>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                            <div className="card p-6 text-center">
+                                <p className="text-4xl font-bold text-[#C21807]">{analytics.totalBookings}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Total Bookings</p>
+                            </div>
+                            <div className="card p-6 text-center">
+                                <p className="text-4xl font-bold text-[#C21807]">₹{analytics.totalRevenue}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Total Revenue</p>
+                            </div>
+                            <div className="card p-6 text-center">
+                                <p className="text-4xl font-bold text-[#C21807]">{analytics.totalSeatsSold}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Total Seats Sold</p>
+                            </div>
+                        </div>
+
+                        <div className="card p-4 sm:p-6">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Per-Movie Breakdown</h3>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead>
+                                        <tr className="border-b border-gray-200 dark:border-gray-700">
+                                            <th className="py-2 font-semibold text-gray-700 dark:text-gray-300">Movie</th>
+                                            <th className="py-2 font-semibold text-gray-700 dark:text-gray-300">Shows</th>
+                                            <th className="py-2 font-semibold text-gray-700 dark:text-gray-300">Seats Sold</th>
+                                            <th className="py-2 font-semibold text-gray-700 dark:text-gray-300">Revenue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {analytics.perMovie.map((item) => (
+                                            <tr key={item.movie_title} className="border-b border-gray-100 dark:border-gray-700 last:border-0">
+                                                <td className="py-2 text-gray-900 dark:text-white">{item.movie_title}</td>
+                                                <td className="py-2 text-gray-700 dark:text-gray-300">{item.shows_count}</td>
+                                                <td className="py-2 text-gray-700 dark:text-gray-300">{item.seats_sold}</td>
+                                                <td className="py-2 text-[#C21807] font-semibold">₹{item.revenue}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </>
                 )}
             </div>
 

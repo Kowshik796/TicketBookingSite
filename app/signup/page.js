@@ -4,11 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { districts } from '../../data/mock';
 
 export default function SignupPage() {
     const router = useRouter();
     const { signup } = useAuth();
+    const { t } = useLanguage();
 
     const [step, setStep] = useState(1);
     const [name, setName] = useState('');
@@ -118,9 +120,9 @@ export default function SignupPage() {
                             Watch Your Show
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400">
-                            {step === 1 && 'Create your account'}
-                            {step === 2 && 'Verify your email'}
-                            {step === 3 && 'Select your district'}
+                            {step === 1 && t('createAccount')}
+                            {step === 2 && t('verifyOtp')}
+                            {step === 3 && t('district')}
                         </p>
                     </div>
 
@@ -157,7 +159,7 @@ export default function SignupPage() {
                         <div className="space-y-5">
                             <div>
                                 <label htmlFor="name" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                    Full Name
+                                    {t('fullName')}
                                 </label>
                                 <input
                                     id="name"
@@ -191,7 +193,7 @@ export default function SignupPage() {
 
                             <div>
                                 <label htmlFor="mobile" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                    Mobile Number <span className="text-gray-400 dark:text-gray-500">(optional)</span>
+                                    {t('mobileNumber')}
                                 </label>
                                 <input
                                     id="mobile"
@@ -209,7 +211,7 @@ export default function SignupPage() {
 
                             <div>
                                 <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                    Email
+                                    {t('email')}
                                 </label>
                                 <input
                                     id="email"
@@ -231,7 +233,7 @@ export default function SignupPage() {
                                 disabled={!isStep1Valid || sendingOtp}
                                 className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {sendingOtp ? 'Sending...' : 'Send OTP'}
+                                {sendingOtp ? 'Sending...' : t('sendOtp')}
                             </button>
                         </div>
                     )}
@@ -265,7 +267,7 @@ export default function SignupPage() {
                                 disabled={otp.join('').length !== 6}
                                 className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Verify OTP
+                                {t('verifyOtp')}
                             </button>
 
                             <div className="text-center">
@@ -289,7 +291,7 @@ export default function SignupPage() {
                         <div className="space-y-5">
                             <div>
                                 <label htmlFor="district" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                    Select District
+                                    {t('district')}
                                 </label>
                                 <select
                                     id="district"
@@ -297,7 +299,7 @@ export default function SignupPage() {
                                     onChange={(e) => setDistrictId(e.target.value)}
                                     className="input-field"
                                 >
-                                    <option value="">-- Choose a district --</option>
+                                    <option value="">{t('selectDistrict')}</option>
                                     {districts.map((d) => (
                                         <option key={d.id} value={d.id}>
                                             {d.name}
@@ -312,15 +314,15 @@ export default function SignupPage() {
                                 disabled={!districtId}
                                 className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Complete Signup
+                                {t('signup')}
                             </button>
                         </div>
                     )}
 
                     <p className="mt-8 text-center text-gray-600 dark:text-gray-400">
-                        Already have an account?{' '}
+                        {t('alreadyHaveAccount')}{' '}
                         <Link href="/login" className="text-gradient font-bold hover:underline">
-                            Log in
+                            {t('logIn')}
                         </Link>
                     </p>
                 </div>

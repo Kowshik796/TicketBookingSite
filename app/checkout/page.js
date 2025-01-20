@@ -6,11 +6,13 @@ import Link from 'next/link';
 import { getShowById } from '../../data/mock';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function CheckoutPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { user } = useAuth();
+    const { t } = useLanguage();
     const showId = searchParams.get('showId');
     const seats = searchParams.get('seats');
     const total = Number(searchParams.get('total')) || 0;
@@ -42,13 +44,39 @@ export default function CheckoutPage() {
         setSaving(true);
         setError('');
 
-        const { error: insertError } = await supabase.from('bookings').insert({
-            show_id: Number(showId),
-            seats: seats,
-            total_amount: total,
-            payment_status: 'completed',
-            user_email: user.email,
-        });
+        // Final conflict check: verify none of the selected seats were just booked
+        try {
+            const { data: bookings } = await supabase
+                .from('bookings')
+                .select('seats')
+                .eq('show_id', Number(showId));
+
+            if (bookings) {
+                const allBooked = bookings.flatMap(b =>
+                    (b.seats || '').split(',').map(s => s.trim()).filter(Boolean)
+                );
+                const conflicted = seatsArray.filter(seat => allBooked.includes(seat));
+                if (conflicted.length > 0) {
+                    setError('Sorry, one or more selected seats were just booked by someone else. Please go back and choose different seats.');
+                    setSaving(false);
+                    return;
+                }
+            }
+        } catch (err) {
+            console.warn('Conflict check failed:', err.message);
+        }
+
+        const { data: insertedBooking, error: insertError } = await supabase
+            .from('bookings')
+            .insert({
+                show_id: Number(showId),
+                seats: seats,
+                total_amount: total,
+                payment_status: 'completed',
+                user_email: user.email,
+            })
+            .select('id')
+            .single();
 
         if (insertError) {
             setError('Failed to complete booking. Please try again.');
@@ -56,10 +84,31 @@ export default function CheckoutPage() {
             return;
         }
 
+        // Fire-and-forget email notification (don't block navigation on email success)
+        fetch('/api/send-ticket-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: user.email,
+                movieTitle: show.movie_title,
+                theaterName: show.theater_name,
+                theaterAddress: show.address,
+                showTime: show.show_time,
+                seats: seats,
+                totalAmount: total,
+                bookingId: insertedBooking.id,
+            }),
+        }).catch(err => console.warn('Ticket email send failed:', err.message));
+
         const params = new URLSearchParams();
         params.set('showId', showId);
         params.set('seats', seats);
         params.set('total', String(total));
+        params.set('bookingId', String(insertedBooking.id));
+        params.set('movieTitle', show.movie_title);
+        params.set('theaterName', show.theater_name);
+        params.set('theaterAddress', show.address);
+        params.set('showTime', show.show_time);
         router.push(`/confirmation?${params.toString()}`);
     };
 
@@ -87,11 +136,11 @@ export default function CheckoutPage() {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
             <div className="mb-6 sm:mb-8">
-                <h1 className="section-title mb-2">Checkout</h1>
+                <h1 className="section-title mb-2">{t('checkout')}</h1>
                 <div className="breadcrumb">
-                    <Link href="/">Home</Link>
+                    <Link href="/">{t('home')}</Link>
                     <span>/</span>
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">Checkout</span>
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">{t('checkout')}</span>
                 </div>
             </div>
 

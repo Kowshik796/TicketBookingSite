@@ -1,9 +1,11 @@
 'use client';
 
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function UserMenuClient() {
     const { user, logout } = useAuth();
+    const { t } = useLanguage();
 
     if (!user) return null;
 
@@ -14,7 +16,7 @@ export default function UserMenuClient() {
                 onClick={logout}
                 className="text-sm bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition"
             >
-                Logout
+                {t('logout')}
             </button>
         </div>
     );

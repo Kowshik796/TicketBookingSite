@@ -1,18 +1,92 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getMovieDetails } from '../../../data/mock';
+import { getMovieReviews } from '../../../data/db';
+import { supabase } from '../../../lib/supabase';
+import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../context/LanguageContext';
+
+function formatRelativeDate(dateStr) {
+    if (!dateStr) return '';
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function StarRating({ rating, interactive, onChange, size }) {
+    const starSize = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5';
+    return (
+        <div className="flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map(star => (
+                <button
+                    key={star}
+                    type="button"
+                    disabled={!interactive}
+                    onClick={() => interactive && onChange?.(star)}
+                    className={`${interactive ? 'cursor-pointer hover:scale-110' : 'cursor-default'} transition-transform duration-150`}
+                >
+                    <svg className={`${starSize} ${star <= rating ? 'text-[#C21807]' : 'text-gray-300 dark:text-gray-600'}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                </button>
+            ))}
+        </div>
+    );
+}
 
 export default function MovieDetailPage() {
     const params = useParams();
+    const { user } = useAuth();
+    const { t, language } = useLanguage();
     const movieId = params.movieId;
     const [movie, setMovie] = useState(null);
     const [showtimes, setShowtimes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showTrailer, setShowTrailer] = useState(false);
+    const [showReviews, setShowReviews] = useState(false);
     const [copied, setCopied] = useState(false);
+
+    // Reviews state
+    const [reviews, setReviews] = useState([]);
+    const [reviewsLoading, setReviewsLoading] = useState(true);
+    const [userRating, setUserRating] = useState(0);
+    const [userComment, setUserComment] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState('');
+    const [editingReview, setEditingReview] = useState(null);
+
+    const fetchReviews = useCallback(async () => {
+        setReviewsLoading(true);
+        const data = await getMovieReviews(movieId);
+        setReviews(data);
+        setReviewsLoading(false);
+
+        // Check if current user already has a review
+        if (user) {
+            const existing = data.find(r => r.user_email === user.email);
+            if (existing) {
+                setEditingReview(existing);
+                setUserRating(existing.rating);
+                setUserComment(existing.comment || '');
+            } else {
+                setEditingReview(null);
+                setUserRating(0);
+                setUserComment('');
+            }
+        }
+    }, [movieId, user]);
 
     useEffect(() => {
         const fetchMovie = async () => {
@@ -24,7 +98,74 @@ export default function MovieDetailPage() {
             setLoading(false);
         };
         fetchMovie();
-    }, [movieId]);
+        fetchReviews();
+    }, [movieId, fetchReviews]);
+
+    const avgRating = reviews.length > 0
+        ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+        : null;
+
+    const handleSubmitReview = async () => {
+        if (!user || userRating === 0) return;
+        setSubmitting(true);
+        setSubmitError('');
+
+        if (editingReview) {
+            // Update existing review
+            const { error } = await supabase
+                .from('reviews')
+                .update({ rating: userRating, comment: userComment || null })
+                .eq('id', editingReview.id);
+
+            if (error) {
+                setSubmitError('Failed to update review. Please try again.');
+                setSubmitting(false);
+                return;
+            }
+        } else {
+            // Insert new review
+            const { error } = await supabase
+                .from('reviews')
+                .insert({
+                    movie_id: Number(movieId),
+                    user_email: user.email,
+                    user_name: user.name || null,
+                    rating: userRating,
+                    comment: userComment || null,
+                });
+
+            if (error) {
+                // If unique constraint violation, update instead
+                if (error.code === '23505') {
+                    const { error: updateError } = await supabase
+                        .from('reviews')
+                        .update({ rating: userRating, comment: userComment || null })
+                        .eq('movie_id', Number(movieId))
+                        .eq('user_email', user.email);
+
+                    if (updateError) {
+                        setSubmitError('Failed to update review. Please try again.');
+                        setSubmitting(false);
+                        return;
+                    }
+                } else {
+                    setSubmitError('Failed to submit review. Please try again.');
+                    setSubmitting(false);
+                    return;
+                }
+            }
+        }
+
+        setSubmitting(false);
+        await fetchReviews();
+    };
+
+    const handleCancelEdit = () => {
+        setEditingReview(null);
+        setUserRating(0);
+        setUserComment('');
+        setSubmitError('');
+    };
 
     if (loading) {
         return (
@@ -129,6 +270,19 @@ export default function MovieDetailPage() {
                                     {movie.certificate}
                                 </span>
                             )}
+                            <button
+                                onClick={() => setShowReviews(prev => !prev)}
+                                className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full border-2 transition-all duration-200 ${showReviews
+                                    ? 'bg-[#C21807] text-white border-[#C21807]'
+                                    : 'text-[#C21807] dark:text-[#FF6B6B] bg-red-50 dark:bg-red-900/30 border-transparent hover:border-[#C21807]'
+                                    }`}
+                            >
+                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                                {avgRating ? `${avgRating} Reviews & Ratings` : 'Reviews & Ratings'}
+                                <span className={`transition-transform duration-200 ${showReviews ? 'rotate-180' : ''}`}>▼</span>
+                            </button>
                         </div>
                         <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                             {movie.runtime != null && (
@@ -150,12 +304,126 @@ export default function MovieDetailPage() {
                         </div>
                         {movie.description && (
                             <p className="mt-4 text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-4">
-                                {movie.description}
+                                {language === 'ta' && movie.description_ta
+                                    ? movie.description_ta
+                                    : movie.description}
                             </p>
                         )}
                     </div>
                 </div>
             </div>
+
+            {/* Expandable Reviews Panel */}
+            {showReviews && (
+                <div className="card p-6 mb-8 sm:mb-10 animate-fade-in">
+                    {/* Average Rating Header */}
+                    <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                        {reviewsLoading ? (
+                            <p className="text-gray-500 dark:text-gray-400 text-sm">Loading reviews...</p>
+                        ) : avgRating ? (
+                            <>
+                                <div className="text-4xl font-bold text-gray-900 dark:text-white">{avgRating}</div>
+                                <div>
+                                    <StarRating rating={Math.round(Number(avgRating))} size="sm" />
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                        {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+                                    </p>
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-gray-500 dark:text-gray-400 text-sm">No ratings yet</p>
+                        )}
+                    </div>
+
+                    {/* Write a Review Form (only if logged in) */}
+                    {user && (
+                        <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
+                                {editingReview ? 'Your Review' : 'Write a Review'}
+                            </h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Rating</label>
+                                    <StarRating
+                                        rating={userRating}
+                                        interactive={true}
+                                        onChange={setUserRating}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Comment (optional)</label>
+                                    <textarea
+                                        value={userComment}
+                                        onChange={(e) => setUserComment(e.target.value)}
+                                        placeholder="Share your thoughts about this movie..."
+                                        rows={3}
+                                        className="input-field resize-none"
+                                    />
+                                </div>
+                                {submitError && (
+                                    <p className="text-red-600 dark:text-red-400 text-sm">{submitError}</p>
+                                )}
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={handleSubmitReview}
+                                        disabled={submitting || userRating === 0}
+                                        className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {submitting ? 'Submitting...' : editingReview ? 'Update Review' : 'Submit Review'}
+                                    </button>
+                                    {editingReview && (
+                                        <button
+                                            onClick={handleCancelEdit}
+                                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-[#C21807] font-semibold transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Individual Reviews List */}
+                    {reviewsLoading ? (
+                        <div className="text-center py-8">
+                            <p className="text-gray-500 dark:text-gray-400">Loading reviews...</p>
+                        </div>
+                    ) : reviews.length === 0 ? (
+                        <div className="text-center py-8">
+                            <p className="text-gray-500 dark:text-gray-400">
+                                {user ? 'Be the first to review this movie!' : 'No reviews yet. Log in to leave a review.'}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {reviews.map(review => (
+                                <div
+                                    key={review.id}
+                                    className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700"
+                                >
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-semibold text-gray-900 dark:text-white text-sm">
+                                                {review.user_name || 'Anonymous'}
+                                            </span>
+                                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                                                {formatRelativeDate(review.created_at)}
+                                            </span>
+                                        </div>
+                                        <StarRating rating={review.rating} size="sm" />
+                                    </div>
+                                    {review.comment && (
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                                            {review.comment}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Trailer Modal */}
             {showTrailer && movie.trailer_key && (
@@ -249,6 +517,7 @@ export default function MovieDetailPage() {
                     ))}
                 </div>
             )}
+
         </div>
     );
 }

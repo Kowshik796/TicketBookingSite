@@ -63,6 +63,23 @@ async function fetchMovieTrailer(movieId) {
     return teaser ? teaser.key : null;
 }
 
+// Translate English text to Tamil using MyMemory's free translation API.
+// Note: MyMemory free tier has a ~500 character limit per request and rate limits
+// (~5000 words/day without an email param). We truncate to 490 chars to stay safe.
+async function translateToTamil(text) {
+    if (!text) return null;
+    try {
+        const truncated = text.length > 490 ? text.slice(0, 490) : text;
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(truncated)}&langpair=en|ta`;
+        const res = await fetch(url);
+        const data = await res.json();
+        return data.responseData?.translatedText || null;
+    } catch (err) {
+        console.warn('Translation failed:', err.message);
+        return null;
+    }
+}
+
 async function syncMovies() {
     console.log('Fetching Tamil movies from TMDB...');
 
@@ -142,6 +159,7 @@ async function syncMovies() {
             : null;
 
         let description = null;
+        let descriptionTa = null;
         let runtime = null;
         let director = null;
         let castNames = null;
@@ -156,6 +174,14 @@ async function syncMovies() {
         }
 
         await sleep(250);
+
+        // Translate description to Tamil (failures leave descriptionTa as null, retried on future runs)
+        try {
+            descriptionTa = await translateToTamil(description);
+        } catch (err) {
+            console.warn(`Warning: Translation failed for movie ${movie.id} (${movie.title}):`, err.message);
+        }
+        await sleep(300);
 
         try {
             const credits = await fetchMovieCredits(movie.id);
@@ -209,6 +235,7 @@ async function syncMovies() {
                     poster_url: posterUrl,
                     release_date: movie.release_date || null,
                     description: description,
+                    description_ta: descriptionTa,
                     runtime: runtime,
                     director: director,
                     cast_names: castNames,
@@ -228,6 +255,7 @@ async function syncMovies() {
                     tmdb_id: movie.id,
                     release_date: movie.release_date || null,
                     description: description,
+                    description_ta: descriptionTa,
                     runtime: runtime,
                     director: director,
                     cast_names: castNames,
@@ -277,23 +305,24 @@ async function syncMovies() {
 
     console.log(`Sync complete. Inserted: ${inserted}, Updated: ${updated}, Shows created: ${totalShowsCreated}`);
 
-    // Backfill missing trailers and posters for existing movies
-    console.log('\n--- Backfilling missing trailers and posters ---');
+    // Backfill missing trailers, posters, and Tamil translations for existing movies
+    console.log('\n--- Backfilling missing trailers, posters, and Tamil translations ---');
     let backfilled = 0;
     try {
         const { data: missingMovies, error: queryError } = await supabase
             .from('movies')
-            .select('id, tmdb_id, title')
-            .or('trailer_key.is.null,poster_url.is.null');
+            .select('id, tmdb_id, title, description, description_ta')
+            .or('trailer_key.is.null,poster_url.is.null,description_ta.is.null');
 
         if (queryError) {
             console.warn('Warning: Could not query movies for backfill:', queryError.message);
         } else if (missingMovies && missingMovies.length > 0) {
-            console.log(`Found ${missingMovies.length} movies missing trailer_key or poster_url.`);
+            console.log(`Found ${missingMovies.length} movies missing trailer_key, poster_url, or description_ta.`);
 
             for (const movie of missingMovies) {
                 let trailerKey = null;
                 let posterUrl = null;
+                let descriptionTa = null;
 
                 try {
                     const details = await fetchMovieDetails(movie.tmdb_id);
@@ -314,9 +343,20 @@ async function syncMovies() {
 
                 await sleep(250);
 
+                // Translate description to Tamil if missing but English description exists
+                if (!movie.description_ta && movie.description) {
+                    try {
+                        descriptionTa = await translateToTamil(movie.description);
+                    } catch (err) {
+                        console.warn(`Warning: Translation failed for backfill movie ${movie.tmdb_id} (${movie.title}):`, err.message);
+                    }
+                    await sleep(300);
+                }
+
                 const updateFields = {};
                 if (trailerKey !== null) updateFields.trailer_key = trailerKey;
                 if (posterUrl !== null) updateFields.poster_url = posterUrl;
+                if (descriptionTa !== null) updateFields.description_ta = descriptionTa;
                 if (Object.keys(updateFields).length > 0) {
                     updateFields.synced_at = new Date().toISOString();
                     const { error: updateError } = await supabase
@@ -331,6 +371,7 @@ async function syncMovies() {
                         const parts = [];
                         if (trailerKey !== null) parts.push('trailer');
                         if (posterUrl !== null) parts.push('poster');
+                        if (descriptionTa !== null) parts.push('Tamil translation');
                         console.log(`Backfilled ${parts.join(' + ')} for ${movie.title}`);
                     }
                 }

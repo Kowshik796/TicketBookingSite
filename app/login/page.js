@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
     const { login } = useAuth();
+    const { t } = useLanguage();
     const router = useRouter();
 
     const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -17,7 +19,7 @@ export default function LoginPage() {
         e.preventDefault();
         setError('');
         if (!email.trim() || !isValidEmail) {
-            setError('Enter a valid email address');
+            setError(t('enterValidEmail'));
             return;
         }
         const result = await login(email);
@@ -36,7 +38,7 @@ export default function LoginPage() {
                         <h1 className="text-4xl font-bold bg-gradient-to-r from-[#C21807] to-[#E63946] bg-clip-text text-transparent mb-2">
                             Watch Your Show
                         </h1>
-                        <p className="text-gray-600 dark:text-gray-400">Log in to book movie tickets</p>
+                        <p className="text-gray-600 dark:text-gray-400">{t('logInToBook')}</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
@@ -48,7 +50,7 @@ export default function LoginPage() {
 
                         <div>
                             <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                Email
+                                {t('email')}
                             </label>
                             <input
                                 id="email"
@@ -62,14 +64,14 @@ export default function LoginPage() {
                         </div>
 
                         <button type="submit" className="btn-primary w-full">
-                            Log In
+                            {t('logIn')}
                         </button>
                     </form>
 
                     <p className="mt-8 text-center text-gray-600 dark:text-gray-400">
-                        Don't have an account?{' '}
+                        {t('dontHaveAccount')}{' '}
                         <Link href="/signup" className="text-gradient font-bold hover:underline">
-                            Sign up
+                            {t('signup')}
                         </Link>
                     </p>
                 </div>

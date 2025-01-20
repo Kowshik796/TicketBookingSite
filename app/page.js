@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getAllMovies, getDistricts } from '../data/mock';
+import { useLanguage } from '../context/LanguageContext';
 
 function formatReleaseDate(dateStr) {
     if (!dateStr) return '';
@@ -14,6 +15,7 @@ function formatReleaseDate(dateStr) {
 
 export default function HomePage() {
     const router = useRouter();
+    const { t } = useLanguage();
     const [movies, setMovies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -78,7 +80,7 @@ export default function HomePage() {
         return (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <div className="text-center py-20">
-                    <p className="text-gray-600 dark:text-gray-400 text-lg">Loading movies...</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">{t('loadingMovies')}</p>
                 </div>
             </div>
         );
@@ -130,20 +132,20 @@ export default function HomePage() {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-in">
             <div className="mb-6 sm:mb-8">
-                <h1 className="section-title mb-2">All Movies</h1>
+                <h1 className="section-title mb-2">{t('allMovies')}</h1>
             </div>
 
             {/* District Selector */}
             <div className="mb-4 sm:mb-6">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Browse by District
+                    {t('browseByDistrict')}
                 </label>
                 <select
                     value={selectedDistrictId}
                     onChange={handleDistrictChange}
                     className="input-field"
                 >
-                    <option value="">Select a district...</option>
+                    <option value="">{t('selectDistrict')}</option>
                     {districts.map((district) => (
                         <option key={district.id} value={district.id}>
                             {district.name}
@@ -161,7 +163,7 @@ export default function HomePage() {
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search movies..."
+                    placeholder={t('search')}
                     className="input-field pl-12"
                 />
             </div>
@@ -184,20 +186,20 @@ export default function HomePage() {
 
             {filteredMovies.length === 0 ? (
                 <div className="text-center py-20">
-                    <p className="text-gray-600 dark:text-gray-400 text-lg">No movies found.</p>
-                    <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">Try adjusting your search or filter.</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">{t('noMoviesFound')}</p>
+                    <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">{t('tryAdjustingSearch')}</p>
                 </div>
             ) : (
                 <>
                     {nowShowing.length > 0 && (
                         <div className="mb-12">
-                            <h2 className="section-title text-2xl mb-6">Now Showing</h2>
+                            <h2 className="section-title text-2xl mb-6">{t('nowShowing')}</h2>
                             {renderMovieGrid(nowShowing)}
                         </div>
                     )}
                     {comingSoon.length > 0 && (
                         <div>
-                            <h2 className="section-title text-2xl mb-6">Coming Soon</h2>
+                            <h2 className="section-title text-2xl mb-6">{t('comingSoon')}</h2>
                             {renderMovieGrid(comingSoon, true)}
                         </div>
                     )}

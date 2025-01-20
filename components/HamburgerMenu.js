@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { useRouter } from 'next/navigation';
 
 export default function HamburgerMenu() {
@@ -11,6 +12,7 @@ export default function HamburgerMenu() {
     const menuRef = useRef(null);
     const { logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const { language, toggleLanguage, t } = useLanguage();
     const router = useRouter();
 
     useEffect(() => {
@@ -52,7 +54,7 @@ export default function HamburgerMenu() {
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                             </svg>
-                            My Bookings
+                            {t('myBookings')}
                         </Link>
                         <Link
                             href="/settings"
@@ -63,7 +65,7 @@ export default function HamburgerMenu() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             </svg>
-                            Settings
+                            {t('settings')}
                         </Link>
                         <Link
                             href="/about"
@@ -73,9 +75,18 @@ export default function HamburgerMenu() {
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            About Us
+                            {t('aboutUs')}
                         </Link>
                         <hr className="my-2 border-gray-200 dark:border-gray-700" />
+                        <button
+                            onClick={() => { toggleLanguage(); }}
+                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-red-50 dark:hover:bg-gray-700 hover:text-[#C21807] transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5h12M9 3v2m1.048 9.5C18.322 4.966 16.316 3.01 12.5 3c-1.95 0-3.5 1.5-3.5 3.5S10.55 10 12.5 10c1.95 0 3.5-1.5 3.5-3.5S14.45 3 12.5 3M21 21l-3.5-3.5M21 21l-3.5 3.5M21 21H10" />
+                            </svg>
+                            {language === 'en' ? 'தமிழ்' : 'English'}
+                        </button>
                         <button
                             onClick={() => { toggleTheme(); setOpen(false); }}
                             className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-red-50 dark:hover:bg-gray-700 hover:text-[#C21807] transition-colors"
@@ -87,7 +98,7 @@ export default function HamburgerMenu() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                                 )}
                             </svg>
-                            {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+                            {theme === 'light' ? t('darkMode') : t('lightMode')}
                         </button>
                         <hr className="my-2 border-gray-200 dark:border-gray-700" />
                         <button
@@ -97,7 +108,7 @@ export default function HamburgerMenu() {
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                             </svg>
-                            Logout
+                            {t('logout')}
                         </button>
                     </div>
                 </div>

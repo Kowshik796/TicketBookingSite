@@ -1,17 +1,61 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getShowById } from '../../../data/mock';
+import { supabase } from '../../../lib/supabase';
+import { useLanguage } from '../../../context/LanguageContext';
 
 export default function BookingPage() {
     const params = useParams();
     const router = useRouter();
+    const { t } = useLanguage();
     const showId = params.showId;
     const [show, setShow] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedSeats, setSelectedSeats] = useState([]);
+    const [bookedSeats, setBookedSeats] = useState([]);
+    const [conflictMessage, setConflictMessage] = useState('');
+
+    const fetchBookedSeats = useCallback(async () => {
+        if (!showId) return;
+        try {
+            const { data: bookings } = await supabase
+                .from('bookings')
+                .select('seats')
+                .eq('show_id', Number(showId));
+
+            if (bookings) {
+                const allBooked = bookings.flatMap(b =>
+                    (b.seats || '').split(',').map(s => s.trim()).filter(Boolean)
+                );
+                setBookedSeats(allBooked);
+            }
+        } catch (err) {
+            console.warn('Failed to fetch booked seats:', err.message);
+        }
+    }, [showId]);
+
+    // Detect if a selected seat became booked during polling
+    useEffect(() => {
+        const newlyBooked = selectedSeats.filter(seat => bookedSeats.includes(seat));
+        if (newlyBooked.length > 0) {
+            setSelectedSeats(prev => prev.filter(seat => !bookedSeats.includes(seat)));
+            setConflictMessage(
+                `Seat${newlyBooked.length > 1 ? 's' : ''} ${newlyBooked.join(', ')} ${newlyBooked.length > 1 ? 'were' : 'was'} just booked by someone else — please choose another.`
+            );
+            const timer = setTimeout(() => setConflictMessage(''), 6000);
+            return () => clearTimeout(timer);
+        }
+    }, [bookedSeats, selectedSeats]);
+
+    // Initial fetch + polling every 10 seconds
+    useEffect(() => {
+        fetchBookedSeats();
+        const interval = setInterval(fetchBookedSeats, 10000);
+        return () => clearInterval(interval);
+    }, [fetchBookedSeats]);
 
     useEffect(() => {
         const fetchShow = async () => {
@@ -27,6 +71,7 @@ export default function BookingPage() {
     const price = show ? show.price : 0;
 
     const toggleSeat = (seatId) => {
+        if (bookedSeats.includes(seatId)) return;
         setSelectedSeats(prev =>
             prev.includes(seatId) ? prev.filter(id => id !== seatId) : [...prev, seatId]
         );
@@ -45,7 +90,7 @@ export default function BookingPage() {
         return (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <div className="text-center py-20">
-                    <p className="text-gray-600 dark:text-gray-400 text-lg">Loading show details...</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">{t('loadingShowDetails')}</p>
                 </div>
             </div>
         );
@@ -55,8 +100,8 @@ export default function BookingPage() {
         return (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <div className="text-center py-20">
-                    <p className="text-gray-600 dark:text-gray-400 text-lg">Show not found.</p>
-                    <Link href="/" className="text-primary dark:text-[#FF6B6B] font-semibold mt-4 inline-block hover:underline">Go Home</Link>
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">{t('showNotFound')}</p>
+                    <Link href="/" className="text-primary dark:text-[#FF6B6B] font-semibold mt-4 inline-block hover:underline">{t('goHome')}</Link>
                 </div>
             </div>
         );
@@ -74,11 +119,11 @@ export default function BookingPage() {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
             <div className="mb-8">
-                <h1 className="section-title mb-2">Select Seats</h1>
+                <h1 className="section-title mb-2">{t('selectSeats')}</h1>
                 <div className="breadcrumb">
-                    <Link href="/">Home</Link>
+                    <Link href="/">{t('home')}</Link>
                     <span>/</span>
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">Booking</span>
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">{t('booking')}</span>
                 </div>
             </div>
 
@@ -106,17 +151,31 @@ export default function BookingPage() {
 
             <div className="card p-6 mb-8">
                 <div className="mb-8">
-                    <div className="flex items-center justify-center gap-8 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="flex items-center justify-center gap-6 sm:gap-8 text-sm text-gray-600 dark:text-gray-400 flex-wrap">
                         <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-600 border-2 border-gray-300 dark:border-gray-500"></div>
-                            <span className="font-medium">Available</span>
+                            <span className="font-medium">{t('available')}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#C21807] to-[#E63946] border-2 border-[#C21807]"></div>
-                            <span className="font-medium">Selected</span>
+                            <span className="font-medium">{t('selected')}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-gray-300 dark:bg-gray-700 border-2 border-gray-400 dark:border-gray-600 flex items-center justify-center">
+                                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </div>
+                            <span className="font-medium">{t('booked')}</span>
                         </div>
                     </div>
                 </div>
+
+                {conflictMessage && (
+                    <div className="bg-red-50 dark:bg-red-900/30 border-2 border-red-100 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm animate-slide-up mb-6 text-center">
+                        {conflictMessage}
+                    </div>
+                )}
 
                 <div className="flex flex-col items-center gap-1.5 sm:gap-3 overflow-x-auto pb-2">
                     {rows.map(row => (
@@ -125,11 +184,13 @@ export default function BookingPage() {
                             {Array.from({ length: seatsPerRow }).map((_, i) => {
                                 const seatId = `${row}${i + 1}`;
                                 const isSelected = selectedSeats.includes(seatId);
+                                const isBooked = bookedSeats.includes(seatId);
                                 return (
                                     <button
                                         key={seatId}
                                         onClick={() => toggleSeat(seatId)}
-                                        className={`seat-btn ${isSelected ? 'seat-selected' : 'seat-available'}`}
+                                        disabled={isBooked}
+                                        className={`seat-btn ${isBooked ? 'seat-booked' : isSelected ? 'seat-selected' : 'seat-available'}`}
                                     >
                                         {i + 1}
                                     </button>

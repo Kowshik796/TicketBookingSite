@@ -66,6 +66,17 @@
         @apply shadow-lg shadow-red-500/40 animate-pulse;
     }
 
+    .seat-booked {
+        @apply bg-gray-300 dark:bg-gray-700 border-gray-400 dark:border-gray-600 text-gray-500 dark:text-gray-400;
+        @apply cursor-not-allowed opacity-70;
+        @apply relative overflow-hidden;
+    }
+
+    .seat-booked::after {
+        content: '✕';
+        @apply absolute inset-0 flex items-center justify-center text-[10px] sm:text-xs font-bold;
+    }
+
     .district-card {
         @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700 p-6 text-center cursor-pointer;
         @apply transition-all duration-300 hover:-translate-y-0.5;
