@@ -42,6 +42,15 @@ async function fetchMovieReleaseDates(movieId) {
     return await res.json();
 }
 
+async function fetchMovieTrailer(movieId) {
+    const url = `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${TMDB_API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const videos = data.results || [];
+    const trailer = videos.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+    return trailer ? trailer.key : null;
+}
+
 async function syncMovies() {
     console.log('Fetching Tamil movies from TMDB...');
 
@@ -64,6 +73,18 @@ async function syncMovies() {
 
     let inserted = 0;
     let updated = 0;
+    let totalShowsCreated = 0;
+
+    // Cache all theater IDs once for show creation
+    let allTheaterIds = [];
+    try {
+        const { data: theaters } = await supabase.from('theaters').select('id');
+        allTheaterIds = (theaters || []).map(t => t.id);
+    } catch (err) {
+        console.warn('Warning: Could not fetch theaters for show creation:', err.message);
+    }
+
+    const showTimes = ['10:00 AM', '1:00 PM', '4:00 PM', '7:00 PM', '9:30 PM'];
 
     for (const movie of allMovies) {
         const posterUrl = movie.poster_path
@@ -115,6 +136,15 @@ async function syncMovies() {
 
         await sleep(250);
 
+        let trailerKey = null;
+        try {
+            trailerKey = await fetchMovieTrailer(movie.id);
+        } catch (err) {
+            console.warn(`Warning: Failed to fetch trailer for movie ${movie.id} (${movie.title}):`, err.message);
+        }
+
+        await sleep(250);
+
         const { data: existing } = await supabase
             .from('movies')
             .select('id')
@@ -133,28 +163,69 @@ async function syncMovies() {
                     director: director,
                     cast_names: castNames,
                     certificate: certificate,
+                    trailer_key: trailerKey,
                     synced_at: new Date().toISOString(),
                 })
                 .eq('tmdb_id', movie.id);
             updated++;
         } else {
-            await supabase.from('movies').insert({
-                title: movie.title,
-                language: 'Tamil',
-                poster_url: posterUrl,
-                tmdb_id: movie.id,
-                release_date: movie.release_date || null,
-                description: description,
-                runtime: runtime,
-                director: director,
-                cast_names: castNames,
-                certificate: certificate,
-            });
+            const { data: insertedMovie, error: insertError } = await supabase
+                .from('movies')
+                .insert({
+                    title: movie.title,
+                    language: 'Tamil',
+                    poster_url: posterUrl,
+                    tmdb_id: movie.id,
+                    release_date: movie.release_date || null,
+                    description: description,
+                    runtime: runtime,
+                    director: director,
+                    cast_names: castNames,
+                    certificate: certificate,
+                    trailer_key: trailerKey,
+                })
+                .select('id')
+                .single();
+
+            if (insertError) {
+                console.warn(`Warning: Failed to insert movie ${movie.title}:`, insertError.message);
+                continue;
+            }
+
             inserted++;
+
+            // Auto-create shows for this new movie across all theaters
+            if (allTheaterIds.length > 0 && insertedMovie) {
+                let showsCreated = 0;
+                const showRows = allTheaterIds.map(theaterId => ({
+                    theater_id: theaterId,
+                    movie_id: insertedMovie.id,
+                    show_time: showTimes[Math.floor(Math.random() * showTimes.length)],
+                    price: Math.floor(Math.random() * 151) + 150, // 150 to 300
+                }));
+
+                // Insert in batches of 50 to avoid request size limits
+                for (let i = 0; i < showRows.length; i += 50) {
+                    try {
+                        const batch = showRows.slice(i, i + 50);
+                        const { error: showError } = await supabase.from('shows').insert(batch);
+                        if (showError) {
+                            console.warn(`Warning: Failed to create shows batch for ${movie.title}:`, showError.message);
+                        } else {
+                            showsCreated += batch.length;
+                        }
+                    } catch (err) {
+                        console.warn(`Warning: Error creating shows batch for ${movie.title}:`, err.message);
+                    }
+                }
+
+                totalShowsCreated += showsCreated;
+                console.log(`Created ${showsCreated} shows for ${movie.title}`);
+            }
         }
     }
 
-    console.log(`Sync complete. Inserted: ${inserted}, Updated: ${updated}`);
+    console.log(`Sync complete. Inserted: ${inserted}, Updated: ${updated}, Shows created: ${totalShowsCreated}`);
 }
 
 syncMovies().catch((err) => {

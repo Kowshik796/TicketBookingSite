@@ -39,7 +39,7 @@ export default function TheaterDetailPage() {
         return (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <div className="text-center py-20">
-                    <p className="text-gray-600 text-lg">Loading shows...</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">Loading shows...</p>
                 </div>
             </div>
         );
@@ -56,13 +56,13 @@ export default function TheaterDetailPage() {
                         {district ? district.name : 'District'}
                     </Link>
                     <span>/</span>
-                    <span className="text-gray-700 font-medium">Theater</span>
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">Theater</span>
                 </div>
             </div>
 
             {shows.length === 0 ? (
-                <div className="error-state">
-                    <p className="text-gray-600 text-lg">No shows available at this theater right now.</p>
+                <div className="error-state dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-900 dark:border-gray-700">
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">No shows available at this theater right now.</p>
                 </div>
             ) : (
                 <div className="space-y-6">
@@ -70,8 +70,8 @@ export default function TheaterDetailPage() {
                         <div key={movieTitle} className="card p-6 animate-slide-up" style={{ animationDelay: `${idx * 0.1}s` }}>
                             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                 <div>
-                                    <h2 className="text-xl font-bold text-gray-900 mb-1">{movieTitle}</h2>
-                                    <p className="text-sm text-gray-500">{movieShows.length} showtimes available</p>
+                                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{movieTitle}</h2>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">{movieShows.length} showtimes available</p>
                                 </div>
                                 <div className="flex flex-wrap gap-3">
                                     {movieShows.map(show => (
@@ -83,7 +83,7 @@ export default function TheaterDetailPage() {
                                             <svg className="w-5 h-5 text-[#C21807]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
-                                            <span className="text-sm font-semibold text-gray-900">{show.show_time}</span>
+                                            <span className="text-sm font-semibold text-gray-900 dark:text-white">{show.show_time}</span>
                                             <span className="text-xs font-bold text-[#C21807]">₹{show.price}</span>
                                         </Link>
                                     ))}

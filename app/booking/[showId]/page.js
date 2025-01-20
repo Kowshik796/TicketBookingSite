@@ -45,7 +45,7 @@ export default function BookingPage() {
         return (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <div className="text-center py-20">
-                    <p className="text-gray-600 text-lg">Loading show details...</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">Loading show details...</p>
                 </div>
             </div>
         );
@@ -55,8 +55,8 @@ export default function BookingPage() {
         return (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <div className="text-center py-20">
-                    <p className="text-gray-600 text-lg">Show not found.</p>
-                    <Link href="/" className="text-primary font-semibold mt-4 inline-block hover:underline">Go Home</Link>
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">Show not found.</p>
+                    <Link href="/" className="text-primary dark:text-[#FF6B6B] font-semibold mt-4 inline-block hover:underline">Go Home</Link>
                 </div>
             </div>
         );
@@ -78,15 +78,15 @@ export default function BookingPage() {
                 <div className="breadcrumb">
                     <Link href="/">Home</Link>
                     <span>/</span>
-                    <span className="text-gray-700 font-medium">Booking</span>
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">Booking</span>
                 </div>
             </div>
 
             <div className="card p-6 mb-8">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-1">{show.movie_title}</h2>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{show.movie_title}</h2>
+                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                             <span className="flex items-center gap-1">
                                 <svg className="w-4 h-4 text-[#C21807]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -106,9 +106,9 @@ export default function BookingPage() {
 
             <div className="card p-6 mb-8">
                 <div className="mb-8">
-                    <div className="flex items-center justify-center gap-8 text-sm text-gray-600">
+                    <div className="flex items-center justify-center gap-8 text-sm text-gray-600 dark:text-gray-400">
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-white border-2 border-gray-300"></div>
+                            <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-600 border-2 border-gray-300 dark:border-gray-500"></div>
                             <span className="font-medium">Available</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -121,7 +121,7 @@ export default function BookingPage() {
                 <div className="flex flex-col items-center gap-3">
                     {rows.map(row => (
                         <div key={row} className="flex items-center gap-2">
-                            <span className="w-8 text-center text-sm font-bold text-gray-700">{row}</span>
+                            <span className="w-8 text-center text-sm font-bold text-gray-700 dark:text-gray-300">{row}</span>
                             {Array.from({ length: seatsPerRow }).map((_, i) => {
                                 const seatId = `${row}${i + 1}`;
                                 const isSelected = selectedSeats.includes(seatId);
@@ -135,7 +135,7 @@ export default function BookingPage() {
                                     </button>
                                 );
                             })}
-                            <span className="w-8 text-center text-sm font-bold text-gray-700">{row}</span>
+                            <span className="w-8 text-center text-sm font-bold text-gray-700 dark:text-gray-300">{row}</span>
                         </div>
                     ))}
                 </div>
@@ -144,13 +144,13 @@ export default function BookingPage() {
             <div className="card p-6">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex-1">
-                        <p className="text-sm text-gray-600 mb-1">Selected Seats</p>
-                        <p className="font-semibold text-gray-900 text-lg">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Selected Seats</p>
+                        <p className="font-semibold text-gray-900 dark:text-white text-lg">
                             {sortedSeats.length > 0 ? sortedSeats.join(', ') : 'None'}
                         </p>
                     </div>
                     <div className="text-center sm:text-right">
-                        <p className="text-sm text-gray-600 mb-1">Total Amount</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Amount</p>
                         <p className="text-3xl font-bold text-gradient">₹{selectedSeats.length * price}</p>
                     </div>
                     <button

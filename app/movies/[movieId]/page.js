@@ -11,6 +11,8 @@ export default function MovieDetailPage() {
     const [movie, setMovie] = useState(null);
     const [showtimes, setShowtimes] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showTrailer, setShowTrailer] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         const fetchMovie = async () => {
@@ -28,7 +30,7 @@ export default function MovieDetailPage() {
         return (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <div className="text-center py-20">
-                    <p className="text-gray-600 text-lg">Loading movie details...</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">Loading movie details...</p>
                 </div>
             </div>
         );
@@ -38,8 +40,8 @@ export default function MovieDetailPage() {
         return (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <div className="text-center py-20">
-                    <p className="text-gray-600 text-lg">Movie not found.</p>
-                    <Link href="/movies" className="text-[#C21807] font-semibold mt-4 inline-block hover:underline">Browse Movies</Link>
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">Movie not found.</p>
+                    <Link href="/movies" className="text-[#C21807] dark:text-[#FF6B6B] font-semibold mt-4 inline-block hover:underline">Browse Movies</Link>
                 </div>
             </div>
         );
@@ -63,7 +65,7 @@ export default function MovieDetailPage() {
                     <span>/</span>
                     <Link href="/movies" className="hover:text-[#C21807]">Movies</Link>
                     <span>/</span>
-                    <span className="text-gray-700 font-medium">{movie.title}</span>
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">{movie.title}</span>
                 </div>
             </div>
 
@@ -78,46 +80,77 @@ export default function MovieDetailPage() {
                             />
                         </div>
                     ) : (
-                        <div className="w-full md:w-72 h-96 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
-                            <svg className="w-20 h-20 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-full md:w-72 h-96 flex-shrink-0 bg-gradient-to-br from-gray-100 dark:from-gray-700 to-gray-200 dark:to-gray-600 rounded-xl flex items-center justify-center">
+                            <svg className="w-20 h-20 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path>
                             </svg>
                         </div>
                     )}
                     <div className="flex-1">
-                        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">{movie.title}</h1>
+                        <div className="flex flex-wrap items-center gap-3 mb-3">
+                            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{movie.title}</h1>
+                            {movie.trailer_key && (
+                                <button
+                                    onClick={() => setShowTrailer(true)}
+                                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#C21807] hover:bg-[#a01406] rounded-full transition-colors"
+                                >
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                    Watch Trailer
+                                </button>
+                            )}
+                            <button
+                                onClick={async () => {
+                                    if (navigator.share) {
+                                        await navigator.share({ title: movie.title, text: `Check out ${movie.title} on Watch Your Show!`, url: window.location.href });
+                                    } else {
+                                        await navigator.clipboard.writeText(window.location.href);
+                                        setCopied(true);
+                                        setTimeout(() => setCopied(false), 2000);
+                                    }
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                                title="Share"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                </svg>
+                                {copied ? 'Link copied!' : 'Share'}
+                            </button>
+                        </div>
                         <div className="flex flex-wrap items-center gap-2 mb-4">
                             {movie.language && (
-                                <span className="text-sm font-medium text-[#C21807] bg-red-50 px-3 py-1 rounded-full">
+                                <span className="text-sm font-medium text-[#C21807] dark:text-[#FF6B6B] bg-red-50 dark:bg-red-900/30 px-3 py-1 rounded-full">
                                     {movie.language}
                                 </span>
                             )}
                             {movie.certificate && (
-                                <span className="text-sm font-medium text-white bg-gray-700 px-3 py-1 rounded-full">
+                                <span className="text-sm font-medium text-white bg-gray-700 dark:bg-gray-600 px-3 py-1 rounded-full">
                                     {movie.certificate}
                                 </span>
                             )}
                         </div>
-                        <div className="space-y-2 text-sm text-gray-700">
+                        <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                             {movie.runtime != null && (
                                 <p>
-                                    <span className="font-semibold text-gray-900">Runtime:</span>{' '}
+                                    <span className="font-semibold text-gray-900 dark:text-white">Runtime:</span>{' '}
                                     {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}m
                                 </p>
                             )}
                             {movie.director && (
                                 <p>
-                                    <span className="font-semibold text-gray-900">Director:</span> {movie.director}
+                                    <span className="font-semibold text-gray-900 dark:text-white">Director:</span> {movie.director}
                                 </p>
                             )}
                             {movie.cast_names && (
                                 <p>
-                                    <span className="font-semibold text-gray-900">Cast:</span> {movie.cast_names}
+                                    <span className="font-semibold text-gray-900 dark:text-white">Cast:</span> {movie.cast_names}
                                 </p>
                             )}
                         </div>
                         {movie.description && (
-                            <p className="mt-4 text-gray-600 leading-relaxed line-clamp-4">
+                            <p className="mt-4 text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-4">
                                 {movie.description}
                             </p>
                         )}
@@ -125,10 +158,35 @@ export default function MovieDetailPage() {
                 </div>
             </div>
 
+            {/* Trailer Modal */}
+            {showTrailer && movie.trailer_key && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setShowTrailer(false)}>
+                    <div className="relative w-full max-w-4xl bg-black rounded-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                        <button
+                            onClick={() => setShowTrailer(false)}
+                            className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <div className="aspect-video">
+                            <iframe
+                                src={`https://www.youtube.com/embed/${movie.trailer_key}?autoplay=1`}
+                                title="Trailer"
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {showtimes.length === 0 ? (
-                <div className="error-state">
-                    <p className="text-gray-600 text-lg">No shows currently scheduled for this movie.</p>
-                    <Link href="/movies" className="text-[#C21807] font-semibold mt-4 inline-block hover:underline">Browse other movies</Link>
+                <div className="error-state dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-900 dark:border-gray-700">
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">No shows currently scheduled for this movie.</p>
+                    <Link href="/movies" className="text-[#C21807] dark:text-[#FF6B6B] font-semibold mt-4 inline-block hover:underline">Browse other movies</Link>
                 </div>
             ) : (
                 <div className="space-y-8">
@@ -148,8 +206,8 @@ export default function MovieDetailPage() {
                                         >
                                             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                                 <div className="flex-1">
-                                                    <h3 className="text-lg font-bold text-gray-900">{show.theater_name}</h3>
-                                                    <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
+                                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{show.theater_name}</h3>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
                                                         <svg className="w-4 h-4 text-[#C21807] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -157,7 +215,7 @@ export default function MovieDetailPage() {
                                                         {show.theater_address}
                                                     </p>
                                                     <div className="flex items-center gap-4 mt-2">
-                                                        <span className="flex items-center gap-1 text-sm text-gray-600">
+                                                        <span className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                                                             <svg className="w-4 h-4 text-[#C21807]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                             </svg>
@@ -167,11 +225,11 @@ export default function MovieDetailPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-2">
-                                                    <span className={`text-sm font-medium ${isSoldOut ? 'text-red-600' : seatsLeft <= 10 ? 'text-orange-600' : 'text-green-600'}`}>
+                                                    <span className={`text-sm font-medium ${isSoldOut ? 'text-red-600 dark:text-red-400' : seatsLeft <= 10 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
                                                         {isSoldOut ? '80/80 seats booked' : `${show.seats_booked}/80 seats booked`}
                                                     </span>
                                                     {isSoldOut ? (
-                                                        <span className="bg-red-100 text-red-700 text-xs font-bold px-3 py-1.5 rounded-full">
+                                                        <span className="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-xs font-bold px-3 py-1.5 rounded-full">
                                                             SOLD OUT
                                                         </span>
                                                     ) : (

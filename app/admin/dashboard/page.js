@@ -76,30 +76,30 @@ export default function AdminDashboardPage() {
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-[#C21807] to-[#E63946] bg-clip-text text-transparent mb-2">
                     Theater Admin
                 </h1>
-                <p className="text-gray-600">Manage shows for your theater</p>
+                <p className="text-gray-600 dark:text-gray-400">Manage shows for your theater</p>
                 {theater && (
                     <div className="card p-6 mt-4">
-                        <h2 className="text-xl font-bold text-gray-800">{theater.name}</h2>
-                        <p className="text-gray-600">{theater.address}</p>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{theater.name}</h2>
+                        <p className="text-gray-600 dark:text-gray-400">{theater.address}</p>
                     </div>
                 )}
             </div>
 
             <div className="mb-10">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Current Shows</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Current Shows</h2>
                 {loading ? (
-                    <div className="card p-6 text-gray-600">Loading shows...</div>
+                    <div className="card p-6 text-gray-600 dark:text-gray-400">Loading shows...</div>
                 ) : shows.length === 0 ? (
-                    <div className="card p-6 text-gray-600">No shows found. Add one below.</div>
+                    <div className="card p-6 text-gray-600 dark:text-gray-400">No shows found. Add one below.</div>
                 ) : (
                     <div className="space-y-3">
                         {shows.map((show) => (
                             <div key={show.id} className="card p-4 flex items-center justify-between">
                                 <div>
-                                    <p className="text-lg font-semibold text-gray-800">
+                                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
                                         {show.movies?.title || 'Unknown Movie'}
                                     </p>
-                                    <p className="text-gray-600">
+                                    <p className="text-gray-600 dark:text-gray-400">
                                         {show.show_time} • ₹{Number(show.price).toFixed(2)}
                                     </p>
                                 </div>
@@ -116,10 +116,10 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="mb-10">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Add New Show</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Add New Show</h2>
                 <form onSubmit={handleAddShow} className="card p-6 space-y-4">
                     <div>
-                        <label htmlFor="movieId" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="movieId" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Movie
                         </label>
                         <select
@@ -136,7 +136,7 @@ export default function AdminDashboardPage() {
                         </select>
                     </div>
                     <div>
-                        <label htmlFor="time" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="time" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Show Time
                         </label>
                         <input
@@ -150,7 +150,7 @@ export default function AdminDashboardPage() {
                         />
                     </div>
                     <div>
-                        <label htmlFor="price" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="price" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Price (₹)
                         </label>
                         <input

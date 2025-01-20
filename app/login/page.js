@@ -6,21 +6,21 @@ import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
 
 export default function LoginPage() {
-    const [mobile, setMobile] = useState('');
+    const [email, setEmail] = useState('');
     const [error, setError] = useState('');
     const { login } = useAuth();
     const router = useRouter();
 
-    const isValidMobile = mobile.length === 10 && /^\d+$/.test(mobile);
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
     const handleSubmit = (e) => {
         e.preventDefault();
         setError('');
-        if (!isValidMobile) {
-            setError('Enter a valid 10-digit mobile number');
+        if (!email.trim() || !isValidEmail) {
+            setError('Enter a valid email address');
             return;
         }
-        const result = login(mobile);
+        const result = login(email);
         if (result.success) {
             router.push('/');
         } else {
@@ -29,36 +29,35 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-red-50 via-white to-orange-50">
+        <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-red-50 via-white to-orange-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             <div className="w-full max-w-md animate-fade-in">
                 <div className="card p-8">
                     <div className="text-center mb-8">
                         <h1 className="text-4xl font-bold bg-gradient-to-r from-[#C21807] to-[#E63946] bg-clip-text text-transparent mb-2">
                             Watch Your Show
                         </h1>
-                        <p className="text-gray-600">Log in to book movie tickets</p>
+                        <p className="text-gray-600 dark:text-gray-400">Log in to book movie tickets</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {error && (
-                            <div className="bg-red-50 border-2 border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm animate-slide-up">
+                            <div className="bg-red-50 dark:bg-red-900/30 border-2 border-red-100 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm animate-slide-up">
                                 {error}
                             </div>
                         )}
 
                         <div>
-                            <label htmlFor="mobile" className="block text-sm font-semibold text-gray-700 mb-2">
-                                Mobile Number
+                            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Email
                             </label>
                             <input
-                                id="mobile"
-                                type="tel"
-                                maxLength={10}
-                                value={mobile}
-                                onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 required
                                 className="input-field"
-                                placeholder="9876543210"
+                                placeholder="you@gmail.com"
                             />
                         </div>
 
@@ -67,7 +66,7 @@ export default function LoginPage() {
                         </button>
                     </form>
 
-                    <p className="mt-8 text-center text-gray-600">
+                    <p className="mt-8 text-center text-gray-600 dark:text-gray-400">
                         Don't have an account?{' '}
                         <Link href="/signup" className="text-gradient font-bold hover:underline">
                             Sign up

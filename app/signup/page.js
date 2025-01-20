@@ -6,9 +6,6 @@ import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
 import { districts } from '../../data/mock';
 
-// TODO: replace with real SMS OTP service (e.g. Firebase Phone Auth / MSG91 / Twilio) when backend is ready
-const MOCK_OTP = '123456';
-
 export default function SignupPage() {
     const router = useRouter();
     const { signup } = useAuth();
@@ -17,10 +14,12 @@ export default function SignupPage() {
     const [name, setName] = useState('');
     const [age, setAge] = useState('');
     const [mobile, setMobile] = useState('');
-    const [gmail, setGmail] = useState('');
+    const [email, setEmail] = useState('');
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [expectedOtp, setExpectedOtp] = useState('');
     const [districtId, setDistrictId] = useState('');
     const [error, setError] = useState('');
+    const [sendingOtp, setSendingOtp] = useState(false);
     const [resendCooldown, setResendCooldown] = useState(0);
 
     const otpRefs = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
@@ -33,15 +32,33 @@ export default function SignupPage() {
         return () => clearTimeout(timer);
     }, [resendCooldown]);
 
-    const isValidMobile = mobile.length === 10 && /^\d+$/.test(mobile);
-    const isValidEmail = gmail ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gmail) : true;
-    const isStep1Valid = name.trim() && Number(age) >= 13 && isValidMobile && isValidEmail;
+    const isValidMobile = !mobile || (mobile.length === 10 && /^\d+$/.test(mobile));
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const isStep1Valid = name.trim() && Number(age) >= 13 && email.trim() && isValidEmail && isValidMobile;
 
-    const handleSendOtp = () => {
+    const handleSendOtp = async () => {
         if (!isStep1Valid) return;
         setError('');
-        setResendCooldown(30);
-        setStep(2);
+        setSendingOtp(true);
+        try {
+            const res = await fetch('/api/send-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setError(data.error || 'Failed to send OTP');
+                return;
+            }
+            setExpectedOtp(data.otp);
+            setResendCooldown(30);
+            setStep(2);
+        } catch {
+            setError('Failed to send OTP. Please check your email and try again.');
+        } finally {
+            setSendingOtp(false);
+        }
     };
 
     const handleOtpChange = (index, value) => {
@@ -66,7 +83,7 @@ export default function SignupPage() {
             setError('Please enter the full 6-digit OTP');
             return;
         }
-        if (entered !== MOCK_OTP) {
+        if (entered !== expectedOtp) {
             setError('Invalid OTP. Please try again.');
             return;
         }
@@ -79,10 +96,10 @@ export default function SignupPage() {
             setError('Please select a district');
             return;
         }
-        const result = await signup(name, `${mobile}@phone.local`, MOCK_OTP, {
+        const result = await signup(name, email, expectedOtp, {
             age: Number(age),
-            mobile,
-            gmail: gmail || '',
+            mobile: mobile || '',
+            gmail: email,
             districtId: Number(districtId),
         });
         if (result.success) {
@@ -93,16 +110,16 @@ export default function SignupPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-red-50 via-white to-orange-50">
+        <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-red-50 via-white to-orange-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             <div className="w-full max-w-md animate-fade-in">
                 <div className="card p-8">
                     <div className="text-center mb-8">
                         <h1 className="text-4xl font-bold bg-gradient-to-r from-[#C21807] to-[#E63946] bg-clip-text text-transparent mb-2">
                             Watch Your Show
                         </h1>
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 dark:text-gray-400">
                             {step === 1 && 'Create your account'}
-                            {step === 2 && 'Verify your mobile number'}
+                            {step === 2 && 'Verify your email'}
                             {step === 3 && 'Select your district'}
                         </p>
                     </div>
@@ -114,14 +131,14 @@ export default function SignupPage() {
                                 <div
                                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= s
                                         ? 'bg-gradient-to-r from-[#C21807] to-[#E63946] text-white'
-                                        : 'bg-gray-200 text-gray-500'
+                                        : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
                                         }`}
                                 >
                                     {s}
                                 </div>
                                 {s < 3 && (
                                     <div
-                                        className={`w-12 h-1 mx-2 rounded ${step > s ? 'bg-gradient-to-r from-[#C21807] to-[#E63946]' : 'bg-gray-200'
+                                        className={`w-12 h-1 mx-2 rounded ${step > s ? 'bg-gradient-to-r from-[#C21807] to-[#E63946]' : 'bg-gray-200 dark:bg-gray-600'
                                             }`}
                                     />
                                 )}
@@ -130,7 +147,7 @@ export default function SignupPage() {
                     </div>
 
                     {error && (
-                        <div className="bg-red-50 border-2 border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm animate-slide-up mb-6">
+                        <div className="bg-red-50 dark:bg-red-900/30 border-2 border-red-100 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm animate-slide-up mb-6">
                             {error}
                         </div>
                     )}
@@ -139,7 +156,7 @@ export default function SignupPage() {
                     {step === 1 && (
                         <div className="space-y-5">
                             <div>
-                                <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label htmlFor="name" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                     Full Name
                                 </label>
                                 <input
@@ -154,7 +171,7 @@ export default function SignupPage() {
                             </div>
 
                             <div>
-                                <label htmlFor="age" className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label htmlFor="age" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                     Age
                                 </label>
                                 <input
@@ -168,13 +185,13 @@ export default function SignupPage() {
                                     placeholder="18"
                                 />
                                 {age && Number(age) < 13 && (
-                                    <p className="text-red-600 text-xs mt-1">You must be at least 13 years old.</p>
+                                    <p className="text-red-600 dark:text-red-400 text-xs mt-1">You must be at least 13 years old.</p>
                                 )}
                             </div>
 
                             <div>
-                                <label htmlFor="mobile" className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Mobile Number
+                                <label htmlFor="mobile" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Mobile Number <span className="text-gray-400 dark:text-gray-500">(optional)</span>
                                 </label>
                                 <input
                                     id="mobile"
@@ -182,39 +199,39 @@ export default function SignupPage() {
                                     maxLength={10}
                                     value={mobile}
                                     onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                                    required
                                     className="input-field"
                                     placeholder="9876543210"
                                 />
                                 {mobile && !isValidMobile && (
-                                    <p className="text-red-600 text-xs mt-1">Enter a valid 10-digit mobile number.</p>
+                                    <p className="text-red-600 dark:text-red-400 text-xs mt-1">Enter a valid 10-digit mobile number.</p>
                                 )}
                             </div>
 
                             <div>
-                                <label htmlFor="gmail" className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Gmail <span className="text-gray-400">(optional)</span>
+                                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Email
                                 </label>
                                 <input
-                                    id="gmail"
+                                    id="email"
                                     type="email"
-                                    value={gmail}
-                                    onChange={(e) => setGmail(e.target.value)}
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
                                     className="input-field"
                                     placeholder="you@gmail.com"
                                 />
-                                {gmail && !isValidEmail && (
-                                    <p className="text-red-600 text-xs mt-1">Enter a valid email address.</p>
+                                {email && !isValidEmail && (
+                                    <p className="text-red-600 dark:text-red-400 text-xs mt-1">Enter a valid email address.</p>
                                 )}
                             </div>
 
                             <button
                                 type="button"
                                 onClick={handleSendOtp}
-                                disabled={!isStep1Valid}
+                                disabled={!isStep1Valid || sendingOtp}
                                 className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Send OTP
+                                {sendingOtp ? 'Sending...' : 'Send OTP'}
                             </button>
                         </div>
                     )}
@@ -222,8 +239,8 @@ export default function SignupPage() {
                     {/* Step 2: OTP Verification */}
                     {step === 2 && (
                         <div className="space-y-6">
-                            <p className="text-center text-sm text-gray-600">
-                                OTP sent to +91-{mobile.slice(0, 2)}XXXXXX{mobile.slice(-2)}
+                            <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+                                OTP sent to {email}
                             </p>
 
                             <div className="flex justify-center gap-3">
@@ -237,7 +254,7 @@ export default function SignupPage() {
                                         value={digit}
                                         onChange={(e) => handleOtpChange(index, e.target.value)}
                                         onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                                        className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:border-[#C21807] focus:ring-2 focus:ring-red-200 outline-none"
+                                        className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-[#C21807] focus:ring-2 focus:ring-red-200 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                     />
                                 ))}
                             </div>
@@ -253,11 +270,11 @@ export default function SignupPage() {
 
                             <div className="text-center">
                                 {resendCooldown > 0 ? (
-                                    <p className="text-sm text-gray-500">Resend OTP in {resendCooldown}s</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Resend OTP in {resendCooldown}s</p>
                                 ) : (
                                     <button
                                         type="button"
-                                        onClick={() => setResendCooldown(30)}
+                                        onClick={handleSendOtp}
                                         className="text-sm text-[#C21807] font-semibold hover:underline"
                                     >
                                         Resend OTP
@@ -271,7 +288,7 @@ export default function SignupPage() {
                     {step === 3 && (
                         <div className="space-y-5">
                             <div>
-                                <label htmlFor="district" className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label htmlFor="district" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                     Select District
                                 </label>
                                 <select
@@ -300,7 +317,7 @@ export default function SignupPage() {
                         </div>
                     )}
 
-                    <p className="mt-8 text-center text-gray-600">
+                    <p className="mt-8 text-center text-gray-600 dark:text-gray-400">
                         Already have an account?{' '}
                         <Link href="/login" className="text-gradient font-bold hover:underline">
                             Log in

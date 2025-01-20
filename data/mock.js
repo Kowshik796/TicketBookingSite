@@ -163,14 +163,26 @@ export async function getAllMovies() {
 
 export async function getMovieDetails(movieId) {
     try {
-        const { data: movie, error: movieError } = await supabase
+        let { data: movie, error: movieError } = await supabase
             .from('movies')
-            .select('id, title, poster_url, language, description, director, cast_names, runtime, certificate')
+            .select('id, title, poster_url, language, description, director, cast_names, runtime, certificate, trailer_key')
             .eq('id', Number(movieId))
             .single();
 
+        // If trailer_key column doesn't exist yet, retry without it
+        if (movieError && movieError.message && movieError.message.includes('trailer_key')) {
+            console.warn('trailer_key column not found, querying without it.');
+            const retry = await supabase
+                .from('movies')
+                .select('id, title, poster_url, language, description, director, cast_names, runtime, certificate')
+                .eq('id', Number(movieId))
+                .single();
+            movie = retry.data;
+            movieError = retry.error;
+        }
+
         if (movieError || !movie) {
-            console.error('Error fetching movie:', movieError);
+            console.error('Error fetching movie:', movieError?.message || movieError || 'Unknown error');
             return null;
         }
 

@@ -24,27 +24,27 @@ export default function ConfirmationPage() {
                 </div>
 
                 <h1 className="section-title mb-2">Booking Confirmed!</h1>
-                <p className="text-gray-600 mb-8">Your tickets have been booked successfully.</p>
+                <p className="text-gray-600 dark:text-gray-400 mb-8">Your tickets have been booked successfully.</p>
 
-                <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 mb-8 text-left border border-gray-100">
+                <div className="bg-gradient-to-br from-gray-50 dark:from-gray-700 to-white dark:to-gray-800 rounded-xl p-6 mb-8 text-left border border-gray-100 dark:border-gray-600">
                     <div className="space-y-3">
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Seats</span>
-                            <span className="text-gray-900 font-medium">{seatsArray.join(', ')}</span>
+                            <span className="text-gray-600 dark:text-gray-400">Seats</span>
+                            <span className="text-gray-900 dark:text-white font-medium">{seatsArray.join(', ')}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Total Paid</span>
-                            <span className="text-gray-900 font-medium">₹{total}</span>
+                            <span className="text-gray-600 dark:text-gray-400">Total Paid</span>
+                            <span className="text-gray-900 dark:text-white font-medium">₹{total}</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="qr-placeholder inline-block mb-2">
-                    <p className="text-sm text-gray-500 mb-3 font-medium">Mock QR Code</p>
-                    <div className="w-40 h-40 bg-gray-100 rounded-xl flex items-center justify-center">
-                        <div className="w-32 h-32 bg-gray-300 rounded-lg grid grid-cols-5 gap-1 p-2">
+                <div className="qr-placeholder dark:bg-gradient-to-br dark:from-gray-700 dark:to-gray-800 dark:border-gray-600 inline-block mb-2">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 font-medium">Mock QR Code</p>
+                    <div className="w-40 h-40 bg-gray-100 dark:bg-gray-600 rounded-xl flex items-center justify-center">
+                        <div className="w-32 h-32 bg-gray-300 dark:bg-gray-500 rounded-lg grid grid-cols-5 gap-1 p-2">
                             {Array.from({ length: 50 }).map((_, i) => (
-                                <div key={i} className={`rounded-sm ${Math.random() > 0.5 ? 'bg-gray-700' : 'bg-white'}`}></div>
+                                <div key={i} className={`rounded-sm ${Math.random() > 0.5 ? 'bg-gray-700 dark:bg-gray-900' : 'bg-white dark:bg-gray-300'}`}></div>
                             ))}
                         </div>
                     </div>

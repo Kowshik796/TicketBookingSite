@@ -16,24 +16,27 @@ export function AuthProvider({ children }) {
         setLoading(false);
     }, []);
 
-    const login = (mobile) => {
+    const login = (email) => {
         const usersJSON = localStorage.getItem('users');
         const users = usersJSON ? JSON.parse(usersJSON) : [];
-        const found = users.find(u => u.mobile === mobile);
+        const found = users.find(u => u.email === email);
         if (found) {
             const { password, ...userWithoutPassword } = found;
             setUser(userWithoutPassword);
             localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
             return { success: true };
         }
-        return { success: false, error: 'Mobile number not found' };
+        return { success: false, error: 'Email not found' };
     };
 
     const signup = (name, email, password, extra = {}) => {
         const usersJSON = localStorage.getItem('users');
         const users = usersJSON ? JSON.parse(usersJSON) : [];
-        if (users.find(u => u.email === email || u.mobile === extra.mobile)) {
-            return { success: false, error: 'Email or mobile already registered' };
+        if (users.find(u => u.email === email)) {
+            return { success: false, error: 'Email already registered' };
+        }
+        if (extra.mobile && users.find(u => u.mobile === extra.mobile)) {
+            return { success: false, error: 'Mobile already registered' };
         }
         const newUser = {
             id: Date.now(),

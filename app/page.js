@@ -26,7 +26,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
             <div className="text-center mb-12">
                 <h1 className="section-title mb-3">Select Your District</h1>
-                <p className="section-subtitle mx-auto">
+                <p className="section-subtitle mx-auto text-gray-600 dark:text-gray-400">
                     Choose your district in Tamil Nadu to explore theaters and book movie tickets.
                 </p>
             </div>
@@ -43,11 +43,11 @@ export default function HomePage() {
 
             {loading ? (
                 <div className="text-center py-20">
-                    <p className="text-gray-600 text-lg">Loading districts...</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">Loading districts...</p>
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="error-state">
-                    <p className="text-gray-600 text-lg">No districts found.</p>
+                <div className="error-state dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-900 dark:border-gray-700">
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">No districts found.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -58,7 +58,7 @@ export default function HomePage() {
                             className="district-card animate-slide-up"
                             style={{ animationDelay: `${index * 0.05}s` }}
                         >
-                            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{district.name}</h3>
+                            <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{district.name}</h3>
                         </Link>
                     ))}
                 </div>

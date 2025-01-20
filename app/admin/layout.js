@@ -22,9 +22,9 @@ function AdminLayoutInner({ children }) {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
             {admin && (
-                <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
+                <header className="sticky top-0 z-50 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
                     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <span className="text-xl font-bold bg-gradient-to-r from-[#C21807] to-[#E63946] bg-clip-text text-transparent">
