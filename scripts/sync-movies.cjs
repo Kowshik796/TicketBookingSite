@@ -92,7 +92,11 @@ async function syncMovies() {
 
     console.log(`Found ${allMovies.length} Tamil movies.`);
 
-    // --- Step 2: Fetch major international releases with Tamil dubs ---
+    // --- Step 2: Fetch major international releases (assumed Tamil-dubbed) ---
+    // This includes major international releases (popularity > 80 or vote_count > 300) based on
+    // the assumption that big-budget Hollywood tentpoles typically receive Tamil-dubbed theatrical
+    // releases in Tamil Nadu — TMDB's spoken_languages data is often too slow/incomplete to rely
+    // on for this, especially for very recent releases.
     console.log('\n--- Fetching major international releases with Tamil dubs ---');
     const internationalNowPlaying = await fetchIndiaMovies('now_playing');
     const internationalUpcoming = await fetchIndiaMovies('upcoming');
@@ -105,29 +109,9 @@ async function syncMovies() {
 
     console.log(`Found ${candidateInternational.length} major international release candidates.`);
 
-    const internationalMovies = [];
-    for (const movie of candidateInternational) {
-        try {
-            const details = await fetchMovieDetails(movie.id);
-            const hasTamilDub = (details.spoken_languages || []).some(lang => lang.iso_639_1 === 'ta');
-            if (hasTamilDub) {
-                // Merge the filtered details with the original list data
-                internationalMovies.push({
-                    ...movie,
-                    overview: details.overview,
-                    runtime: details.runtime,
-                });
-                console.log(`  ✓ ${movie.title} — has Tamil audio track`);
-            } else {
-                console.log(`  ✗ ${movie.title} — no Tamil audio track, skipping`);
-            }
-        } catch (err) {
-            console.warn(`  Warning: Failed to fetch details for ${movie.title}:`, err.message);
-        }
-        await sleep(250);
-    }
+    const internationalMovies = [...candidateInternational];
 
-    console.log(`\nInternational movies with Tamil dubs to sync: ${internationalMovies.length}`);
+    console.log(`\nInternational movies to sync (assumed Tamil-dubbed): ${internationalMovies.length}`);
     allMovies.push(...internationalMovies);
 
     if (allMovies.length === 0) {
